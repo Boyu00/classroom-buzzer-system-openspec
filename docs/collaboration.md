@@ -62,7 +62,7 @@
 | 功能／tasks／issues | 作者 | PR 連結 | 審閱者與實質意見連結 | 驗證證據 |
 | --- | --- | --- | --- | --- |
 | 初始規劃 #1（非功能驗收） | a0972776282-tech | [PR #26](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/26) 已合併 | Boyu00 的具體建議，尚無正式 Approve review | OpenSpec strict validation |
-| #3、tasks 2.1～2.3 骨架 | a0972776282-tech | 本機分支 feat/project-foundation；實作 PR 尚未建立 | 待另一位組員安裝並 review | docs/verification.md，11 項基礎測試 |
+| #3、tasks 2.1～2.3 骨架 | a0972776282-tech | [PR #27](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/27)，feat/project-foundation，程式提交 3735205，待合併 | 已請 Boyu00 review；安裝確認與實質意見待補 | docs/verification.md，11 項基礎測試 |
 
 每人至少一筆由自己提出且已合併 PR，以及對另一人的實質 review。建立初始規劃 PR 可保留協作紀錄，但不代表功能 issues 已完成。
 
