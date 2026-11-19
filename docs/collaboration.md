@@ -1,11 +1,11 @@
 # 分工與接力紀錄
 
-目前僅完成文件規劃；member A 是先實作成員，member B 是接續成員。請兩人各自填入自己的 GitHub 帳號，不依 issue 指派推測真實身分。
+初始規劃已由 PR #26 合併；member A 已實作 #3 本機骨架，尚待另一位組員依 README 安裝並 review。本次不代表 A 已完成全部核心或已正式交接 B。帳號對應依 PR #26 的實際分工留言及使用者確認。
 
 | 角色 | GitHub 帳號 | Issues | 現況 |
 | --- | --- | --- | --- |
-| member A | 待本人填寫 | #3～#12 | 未實作 |
-| member B | 待本人填寫 | #13～#19 | 未實作 |
+| member A | a0972776282-tech | #3～#12 | #3 已於本機分支實作並測試，#4～#12 未實作 |
+| member B | Boyu00 | #13～#19 | 未實作 |
 | 共同 | 兩人 | #1～#2、#20～#25 | 規劃文件已產生，review／討論／交付未完成 |
 
 ## 既有 issues 與責任
@@ -51,17 +51,18 @@
 | 項目 | 真實內容 |
 | --- | --- |
 | 交接日期／commit／PR | 尚未交接 |
-| 安裝與啟動方式 | 尚未實作；完成 #3 後填入 |
-| 測試命令與結果 | 尚未執行產品測試 |
+| 安裝與啟動方式 | #3 骨架：README 的 npm ci --ignore-scripts、npm start；完整產品尚不可操作 |
+| 測試命令與結果 | #3 骨架 npm test：11／11；產品 AC 與真實 Sheets 未測 |
 | 模型／API 變更 | 規劃見 design.md；實作差異待記錄 |
-| 已完成 issues | 無 |
-| 未完成／已知問題 | 全部實作待完成；真實 Sheets 與教師／結果頁待 B |
+| 已完成 issues | #3 本機實作與自動驗證完成，PR review／合併與 GitHub issue 關閉尚未完成 |
+| 未完成／已知問題 | #4～#19 與共同產品驗收未完成；#5 前需對齊 PR #26 中加入碼、組名與活動數量建議 |
 
 ## PR 與 review 證據（待填）
 
 | 功能／tasks／issues | 作者 | PR 連結 | 審閱者與實質意見連結 | 驗證證據 |
 | --- | --- | --- | --- | --- |
-| 尚無實作紀錄 | — | — | — | — |
+| 初始規劃 #1（非功能驗收） | a0972776282-tech | [PR #26](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/26) 已合併 | Boyu00 的具體建議，尚無正式 Approve review | OpenSpec strict validation |
+| #3、tasks 2.1～2.3 骨架 | a0972776282-tech | 本機分支 feat/project-foundation；實作 PR 尚未建立 | 待另一位組員安裝並 review | docs/verification.md，11 項基礎測試 |
 
 每人至少一筆由自己提出且已合併 PR，以及對另一人的實質 review。建立初始規劃 PR 可保留協作紀錄，但不代表功能 issues 已完成。
 

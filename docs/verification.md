@@ -4,14 +4,22 @@
 
 - 已建立 OpenSpec 初始規劃；`openspec validate build-classroom-buzzer --strict` 在產生文件時執行通過。
 - 該命令只驗證規劃格式，不驗證產品功能。
-- 尚無產品程式、自動測試結果、真實 Google Sheets 授權、人工驗收、PR review 或 Demo 證據。
-- tasks 的實作與驗收項目保持未完成；以下不得預先改成通過。
+- member A #3 已完成本機骨架、資料庫 migration 與共用交易入口，產品登入、搶答與 Sheets 行為尚未實作。
+- 2026-11-20：依 lockfile 重裝後 11 項基礎自動測試全過，啟動頁及健康檢查回應成功，詳見下表。
+- 初始規劃 PR #26 已合併，組員留下具體設計建議；正式 Approve review、跨組對齊與 #3 的另一位組員安裝驗證尚未完成，不虛列為已通過。
+- 真實 Google Sheets 授權、產品人工驗收與 Demo 尚未完成。AC-01～AC-23 維持未測；骨架層測試不代表完整產品情境已驗收。
 
 ## 自動驗證紀錄（實作後填寫）
 
 | Commit／環境 | 實際命令 | 結果 | 對應 tasks／AC | 證據 |
 | --- | --- | --- | --- | --- |
-| 尚未實作 | — | 未執行 | — | — |
+| 2026-11-20，Windows，Node 24.22.0／npm 11.19.1，feat/project-foundation | npm ci --ignore-scripts | 依 lockfile 重裝成功；66 套件稽核，0 個已知漏洞 | 2.1 | package-lock.json；真實命令輸出 |
+| 同上，重裝後執行 | npm test | 11／11 通過 | 2.1、2.2 | tests/server.test.js、tests/storage.test.js |
+| 同上，本機資料庫 | npm run db:migrate | 初始 migration 成功；重跑不重複套用 | 2.2 | schema_migrations；migration 測試 |
+| 同上 | npm start；GET /；GET /api/health | 頁面 HTTP 200；health 為 status ok、stage foundation、database ok | 2.1 | 實際服務回應與 HTTP 測試；僅 127.0.0.1 |
+| 同上 | git check-ignore .env data/classroom.sqlite3 data/classroom.sqlite3-wal sessions/example credentials/service-account.json node_modules/express/package.json | 列舉路徑均被排除；git status 無本機資料與憑證 | 2.3 | .gitignore 與實際命令輸出 |
+
+測試先在沙箱內遇到 localhost 連線權限限制，改於核准的環境執行通過；另修正 Windows 測試清理順序，先關資料庫再移除該測試建立的暫存資料夾。所有產品驗收、效能與真實 Sheets 仍待後續。
 
 ## 人工驗收前提
 
@@ -50,8 +58,8 @@
 | 項目 | 狀態 | 證據 |
 | --- | --- | --- |
 | DC-01 每人 PR 與實質 review | 未完成 | — |
-| DC-02 能力文件與實作追溯 | 規劃文件已建立，實作未完成 | — |
-| DC-03 OpenSpec 完整流程 | Propose 文件已建立，Apply／Verify／Sync／Archive 未完成 | — |
+| DC-02 能力文件與實作追溯 | 規劃文件及 #3 基礎實作已建立，其餘未完成 | tasks 2.1～2.3、docs/storage.md |
+| DC-03 OpenSpec 完整流程 | Propose 完成、Apply 僅完成 #3；完整 Verify／Sync／Archive 未完成 | 初始規劃 PR #26；後續實作 PR 待補 |
 | DC-04 與 SpecKit 小組一致性討論 | 待真實討論紀錄 | — |
 | DC-05 AI 對話、文件與產品一致 | 未完成 | — |
 | DC-06 五分鐘內完整 Demo | 未完成 | — |
