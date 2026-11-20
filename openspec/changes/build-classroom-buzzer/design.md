@@ -12,6 +12,16 @@
 
 ## Decisions
 
+### 0. 2026-11-20 已確認的活動預設與身分實作
+
+使用者已明確確認採用 PR #26 建議：同一老師含多個登入 session，最多一個非 CLOSED 活動；加入碼六碼，字元集 `ABCDEFGHJKLMNPQRSTUVWXYZ23456789`；組名 trim 後 1～30 Unicode code points，大小寫區分、不另做正規化。以 migration 002 的部分唯一索引與共用交易維持活動上限，保留 001 不改，舊資料有多個未結束活動時 migration 會拒絕而不刪資料。另一 SpecKit 小組的同步紀錄仍待補。
+
+教師密碼 8～128 Unicode 字元、保留原文不可全空白，以隨機 salt 的 scrypt（N=32768、r=8、p=3、64-byte key）保存。session 與 CSRF 使用 32-byte 隨機 Cookie 衍生及 SHA-256 hash；setup／login／logout／首次 join 旋轉 token，保留 session_id 供歷史活動外鍵引用。Cookie 為 HttpOnly、SameSite=Strict，本機 HTTP 不設 Secure；GET session 與旋轉回應提供 CSRF token，所有變更驗證合法本機 Host、精確 Origin 與 X-CSRF-Token。
+
+匿名／教師／學生期限分別為 1／8／24 小時，GET session 清理無引用的到期 row，有歷史活動或匯入預覽引用者保留但到期即無權限。學生 refresh 使用原 Cookie 恢復；遺失、到期或登出後不提供只靠組名的換裝置接管。這些是身分模組的明確設計預設，API 約定詳見 docs/access-api.md。
+
+tasks 3.4 先完成狀態控制；有已受理答案時暫以 RESULT_FINALIZATION_PENDING 拒絕 close，待原規劃 tasks 5.3 接入完整結果同交易保存後才可通過完整 #6 驗收。SSE 與 2 秒階段更新仍由 #8 完成，不以快照查詢冒充推播。
+
 ### 1. 模組與責任
 
 規劃使用 `src/`（後端）、`public/`（頁面）、`tests/`（測試）。A 建立共用設定、資料庫 migration、session／CSRF、活動、受理、排名與 SSE 模組；B 擴充 Sheets gateway、解析、匯出及教師／結果頁。兩人各自測試所負責功能，共同進行回歸與人工驗收。

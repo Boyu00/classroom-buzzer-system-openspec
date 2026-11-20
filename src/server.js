@@ -41,7 +41,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   try {
     const runtime = await startServer();
     console.log(`課堂搶答系統骨架：http://127.0.0.1:${runtime.server.address().port}`);
-    console.log('目前僅有環境狀態頁；登入、搶答與 Sheets 功能尚未實作。');
+    console.log('教師驗證與活動控制 API 已提供；操作頁面、搶答、推播與 Sheets 功能待後續整合。');
     const shutdown = () => {
       runtime.close().catch(() => {
         console.error('關閉服務失敗。');

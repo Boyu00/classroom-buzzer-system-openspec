@@ -4,10 +4,11 @@
 
 - 已建立 OpenSpec 初始規劃；`openspec validate build-classroom-buzzer --strict` 在產生文件時執行通過。
 - 該命令只驗證規劃格式，不驗證產品功能。
-- member A #3 已完成本機骨架、資料庫 migration 與共用交易入口，產品登入、搶答與 Sheets 行為尚未實作。
+- member A #3 已合併；本機分支另完成教師驗證、組別與活動控制基礎 API。提交答案、推播、排名與 Sheets 尚未實作。
 - 2026-11-20：依 lockfile 重裝後 11 項基礎自動測試全過，啟動頁及健康檢查回應成功，詳見下表。
-- 初始規劃 PR #26 已合併，組員留下具體設計建議；正式 Approve review、跨組對齊與 #3 的另一位組員安裝驗證尚未完成，不虛列為已通過。
-- 真實 Google Sheets 授權、產品人工驗收與 Demo 尚未完成。AC-01～AC-23 維持未測；骨架層測試不代表完整產品情境已驗收。
+- PR #27 已獲 Boyu00 正式 Approve，以 Node 24.22.3 驗證安裝、11／11 測試與啟動，並合併為 b5dcda8；新一批的實質 review 尚未完成。
+- 2026-11-20：#4／#5、#6 基礎控制連同既有回歸共 23／23 通過；API 與整合邊界見 docs/access-api.md。
+- 真實 Google Sheets 授權、產品人工驗收與 Demo 尚未完成。AC-01～AC-24 的完整人工驗收維持未測，不以後端自動測試代替。
 
 ## 自動驗證紀錄（實作後填寫）
 
@@ -18,6 +19,7 @@
 | 同上，本機資料庫 | npm run db:migrate | 初始 migration 成功；重跑不重複套用 | 2.2 | schema_migrations；migration 測試 |
 | 同上 | npm start；GET /；GET /api/health | 頁面 HTTP 200；health 為 status ok、stage foundation、database ok | 2.1 | 實際服務回應與 HTTP 測試；僅 127.0.0.1 |
 | 同上 | git check-ignore .env data/classroom.sqlite3 data/classroom.sqlite3-wal sessions/example credentials/service-account.json node_modules/express/package.json | 列舉路徑均被排除；git status 無本機資料與憑證 | 2.3 | .gitignore 與實際命令輸出 |
+| 2026-11-20，feat/activity-access，本機 Node 24.22.0 | npm test | 23／23 通過 | 3.1～3.5 的後端 API；AC-24 自動情境 | tests/auth.test.js、tests/activities.test.js 與既有回歸 |
 
 測試先在沙箱內遇到 localhost 連線權限限制，改於核准的環境執行通過；另修正 Windows 測試清理順序，先關資料庫再移除該測試建立的暫存資料夾。所有產品驗收、效能與真實 Sheets 仍待後續。
 
@@ -52,12 +54,13 @@
 | AC-21 | 公平模式鼓勵未勝出組 | 未測 | — |
 | AC-22 | 公平同勝次、題組、無人作答、重啟 | 未測 | — |
 | AC-23 | 模式鎖定與各輸出一致 | 未測 | — |
+| AC-24 | 活動上限、加入碼與組名邊界 | 自動情境已通過；人工整合未測 | tests/activities.test.js；使用者於本組確認新規則，跨組同步待補 |
 
 ## 交付檢查
 
 | 項目 | 狀態 | 證據 |
 | --- | --- | --- |
-| DC-01 每人 PR 與實質 review | 未完成 | — |
+| DC-01 每人 PR 與實質 review | A 的已合併 PR 與 B 的正式 review 已有；B 的 PR 及 A 的 review 尚待後續 | PR #27 與 review-5992202981 |
 | DC-02 能力文件與實作追溯 | 規劃文件及 #3 基礎實作已建立，其餘未完成 | tasks 2.1～2.3、docs/storage.md |
 | DC-03 OpenSpec 完整流程 | Propose 完成、Apply 僅完成 #3；完整 Verify／Sync／Archive 未完成 | 初始規劃 PR #26；後續實作 PR 待補 |
 | DC-04 與 SpecKit 小組一致性討論 | 待真實討論紀錄 | — |
