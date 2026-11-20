@@ -20,7 +20,7 @@
 
 匿名／教師／學生期限分別為 1／8／24 小時，GET session 清理無引用的到期 row，有歷史活動或匯入預覽引用者保留但到期即無權限。學生 refresh 使用原 Cookie 恢復；遺失、到期或登出後不提供只靠組名的換裝置接管。這些是身分模組的明確設計預設，API 約定詳見 docs/access-api.md。
 
-tasks 3.4 先完成狀態控制；有已受理答案時暫以 RESULT_FINALIZATION_PENDING 拒絕 close，待原規劃 tasks 5.3 接入完整結果同交易保存後才可通過完整 #6 驗收。SSE 與 2 秒階段更新仍由 #8 完成，不以快照查詢冒充推播。
+tasks 3.4 的狀態控制已接入 tasks 5.3：有答案時可結束，完整排名與 CLOSED 同交易保存，失敗回滾並維持 OPEN。SSE 與 2 秒階段更新仍由 #8 完成，不以快照查詢冒充推播；完整 #6 人工整合仍待驗收。
 
 ### 1. 模組與責任
 
@@ -47,7 +47,7 @@ tasks 3.4 先完成狀態控制；有已受理答案時暫以 RESULT_FINALIZATIO
 
 Unit 格式：`{ unitId, type: "SINGLE" | "GROUP", order, questions: [{ questionId, order }] }`。正式題目另保存後端專用 source mapping，不在學生快照暴露來源設定與教師資料。
 
-受理格式：`{ submissionId, unitId, answers: [{ questionId, text }], acceptedAt, acceptedOrder }`。學生 API 以 session 確定 group，不接受客戶端指定角色／組別。學生已受理回應與紀錄不附全體順位或他組數量。
+內部受理格式：`{ submissionId, unitId, answers: [{ questionId, text }], acceptedAt, acceptedOrder }`。學生 API 以 session 確定 group，不接受客戶端指定角色／組別。依根規格的隱私要求，PREPARING／OPEN 學生回覆及快照省略全活動 acceptedOrder，避免推知他組送出數量；submissionId 使用隨機 UUID。教師保留 acceptedOrder；CLOSED 後學生可見完整序號與固定排名。實作約定見 docs/submission-results-api.md。
 
 結果格式：`{ activityId, mode, state: "CLOSED", units: [{ unitId, order, questions, submissions: [{ submissionId, groupName, answers, acceptedAt, acceptedOrder, rank, isWinner }], winnerSubmissionId: string | null }] }`。Sheets 與 CSV 由此保存結果及後端映射輸出，禁止另算一套排名。
 

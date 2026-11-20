@@ -1,5 +1,7 @@
 import { randomInt, randomUUID } from 'node:crypto';
 import { HttpError } from '../http-error.js';
+import { readSubmission, readUnits } from '../submissions/read-model.js';
+import { finalizeResults, readResults } from '../results/service.js';
 
 const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const timestamp = () => new Date().toISOString();
@@ -75,17 +77,22 @@ export function createActivityService(store, auth) {
           throw new HttpError(session.role === 'ANONYMOUS' ? 401 : 403, 'ACTIVITY_FORBIDDEN', '無法存取此活動。');
         }
         const activity = getActivity(db, id);
-        const units = db.prepare('SELECT unit_id, type, unit_order FROM units WHERE activity_id = ? ORDER BY unit_order').all(id).map((unit) => ({
-          unitId: unit.unit_id, type: unit.type, order: unit.unit_order,
-          questions: db.prepare('SELECT question_id, question_order FROM questions WHERE activity_id = ? AND unit_id = ? ORDER BY question_order')
-            .all(id, unit.unit_id).map((q) => ({ questionId: q.question_id, order: q.question_order })),
-        }));
+        if (activity.state === 'CLOSED') return { data: readResults(db, activity) };
+        const units = readUnits(db, id);
         const base = { ...view(activity), units };
         if (session.role === 'TEACHER') {
-          return { data: { ...base, joinCode: activity.join_code, groups: db.prepare('SELECT group_id AS groupId, group_name AS groupName FROM groups WHERE activity_id = ? ORDER BY created_at, group_id').all(id) } };
+          const submissions = db.prepare('SELECT * FROM submissions WHERE activity_id = ? ORDER BY accepted_order').all(id)
+            .map((s) => readSubmission(db, s, { includeOrder: true, includeGroup: true }));
+          const monitoredUnits = units.map((unit) => ({ ...unit,
+            rankingStatus: activity.mode === 'FAIR' ? 'PENDING_CLOSE' : 'ACCEPTED_ORDER',
+            winnerSubmissionId: activity.mode === 'FAIR' ? null : submissions.find((s) => s.unitId === unit.unitId)?.submissionId ?? null,
+          }));
+          return { data: { ...base, units: monitoredUnits, submissions, joinCode: activity.join_code, groups: db.prepare('SELECT group_id AS groupId, group_name AS groupName FROM groups WHERE activity_id = ? ORDER BY created_at, group_id').all(id) } };
         }
         const own = db.prepare('SELECT group_name FROM groups WHERE activity_id = ? AND group_id = ?').get(id, session.group_id);
-        return { data: { ...base, groupId: session.group_id, groupName: own.group_name } };
+        const submissions = db.prepare('SELECT * FROM submissions WHERE activity_id = ? AND group_id = ? ORDER BY accepted_order').all(id, session.group_id)
+          .map((s) => readSubmission(db, s));
+        return { data: { ...base, groupId: session.group_id, groupName: own.group_name, submissions } };
       });
     },
     async setMode(token, id, mode) {
@@ -115,8 +122,7 @@ export function createActivityService(store, auth) {
         auth.requireTeacher(token, db);
         const activity = getActivity(db, id);
         if (activity.state !== 'OPEN') throw new HttpError(409, 'INVALID_PHASE', '只有搶答中的活動可結束。');
-        // tasks 3.4 的完整結果原子保存依原規劃在 5.3 接入；現在不能以空結果掩蓋已受理答案。
-        if (db.prepare('SELECT 1 FROM submissions WHERE activity_id = ?').get(id)) throw new HttpError(409, 'RESULT_FINALIZATION_PENDING', '完整結果計算尚待後續實作，未結束活動。');
+        finalizeResults(db, activity);
         db.prepare("UPDATE activities SET state = 'CLOSED', closed_at = ? WHERE activity_id = ?").run(timestamp(), id);
         return { data: view(getActivity(db, id)) };
       });
