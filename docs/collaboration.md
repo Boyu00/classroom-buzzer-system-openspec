@@ -54,7 +54,7 @@
 | 安裝與啟動方式 | #3 骨架：README 的 npm ci --ignore-scripts、npm start；完整產品尚不可操作 |
 | 測試命令與結果 | #3 骨架 npm test：11／11；產品 AC 與真實 Sheets 未測 |
 | 模型／API 變更 | 規劃見 design.md；實作差異待記錄 |
-| 已完成 issues | #3 已經 PR #27 正式 review 並合併；新一批尚未開 PR |
+| 已完成 issues | #3 已經 PR #27 正式 review 並合併；新一批 PR #28 已建立，尚未合併 |
 | 未完成／已知問題 | #4／#5 與 #6 基礎 API 待 review；#6 答案結束待 tasks 5.3、SSE 待 #8；#7～#19 及共同驗收未完成 |
 
 ## PR 與 review 證據（待填）
@@ -63,7 +63,7 @@
 | --- | --- | --- | --- | --- |
 | 初始規劃 #1（非功能驗收） | a0972776282-tech | [PR #26](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/26) 已合併 | Boyu00 的具體建議，尚無正式 Approve review | OpenSpec strict validation |
 | #3、tasks 2.1～2.3 骨架 | a0972776282-tech | [PR #27](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/27) 已合併，提交 b5dcda8 | [Boyu00 正式 Approve](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/27#pullrequestreview-5992202981)，Node 24.22.3、11／11、可啟動 | docs/verification.md |
-| #4／#5、#6 基礎控制 | a0972776282-tech | 本機 feat/activity-access；尚未上傳 | 待新 PR review，不能套用 #27 的核准 | 23 項回歸；docs/access-api.md |
+| #4／#5、#6 基礎控制 | a0972776282-tech | [PR #28](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/28)，feat/activity-access，程式提交 4c62993，待合併；#6 保留開啟 | 已請 Boyu00 review；不能套用 #27 的核准 | 23 項回歸；docs/access-api.md |
 
 每人至少一筆由自己提出且已合併 PR，以及對另一人的實質 review。建立初始規劃 PR 可保留協作紀錄，但不代表功能 issues 已完成。
 
