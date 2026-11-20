@@ -6,7 +6,7 @@
 - 該命令只驗證規劃格式，不驗證產品功能。
 - member A #3～#5 與 #6 基礎 API 已合併；本機另完成提交答案、題組原子保存、速度／公平排名及固定結果。推播、操作頁與 Sheets 尚未實作。
 - 2026-11-20：依 lockfile 重裝後 11 項基礎自動測試全過，啟動頁及健康檢查回應成功，詳見下表。
-- PR #27 已獲 Boyu00 正式 Approve，以 Node 24.22.3 驗證安裝、11／11 測試與啟動，並合併為 b5dcda8；PR #28 亦獲正式 Approve 並合併為 a78412c。最新本機受理／排名批次尚未 review。
+- PR #27 已獲 Boyu00 正式 Approve，以 Node 24.22.3 驗證安裝、11／11 測試與啟動，並合併為 b5dcda8；PR #28 亦獲正式 Approve 並合併為 a78412c。最新受理／排名批次已建立 [PR #29](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/29)，尚未 review 或合併。
 - 2026-11-20：#4／#5、#6 基礎控制連同既有回歸共 23／23 通過；API 與整合邊界見 docs/access-api.md。
 - 2026-11-20：#7／#10、#11 排名核心與有答案結束連同回歸 37／37 通過；OpenSpec tasks 15／43。SSE、學生頁與完整人工 AC 尚未完成。
 - 真實 Google Sheets 授權、產品人工驗收與 Demo 尚未完成。AC-01～AC-24 的完整人工驗收維持未測，不以後端自動測試代替。
