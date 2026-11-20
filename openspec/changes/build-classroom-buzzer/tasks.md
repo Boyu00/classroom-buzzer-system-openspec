@@ -1,6 +1,6 @@
 # Tasks
 
-本檔是實作與驗收清單，所有項目目前均未完成。規劃檔存在不代表產品通過驗收。根目錄 spec.md 是完整基準，各能力 spec 定義可觀察行為，design.md 定義共用模型與介面。以下 #N 均指本 repository 的 GitHub issue；A 為先實作的 member A，B 為接續的 member B。
+本檔是實作與驗收清單，僅依實際驗證勾選已完成項目；文件存在不代表產品通過驗收。根目錄 spec.md 是完整基準，各能力 spec 定義可觀察行為，design.md 定義共用模型與介面。以下 #N 均指本 repository 的 GitHub issue；A 為先實作的 member A，B 為接續的 member B。
 
 ## 1. 共同規劃與對齊
 
@@ -9,9 +9,9 @@
 
 ## 2. 專案骨架與資料層（member A）
 
-- [ ] 2.1 [A #3] 建立 Express、SQLite、public 與 tests 結構，鎖定相容版本及 lockfile；驗證：全新安裝可依 README 命令啟動，僅監聽 localhost。
-- [ ] 2.2 [A #3] 建立 migration、資料層及 design 約定的共用交易／序列化入口，包含受理唯一鍵及後端來源映射；驗證：新資料庫可建表，違反唯一鍵被拒絕，重啟保存資料。
-- [ ] 2.3 [A #3] 設定機密、資料庫與 session 排除，補 README 的真實安裝、設定與測試命令；驗證：`git status` 無本機敏感資料，另一組員能照步驟啟動。
+- [x] 2.1 [A #3] 建立 Express、SQLite、public 與 tests 結構，鎖定相容版本及 lockfile；驗證：全新安裝可依 README 命令啟動，僅監聽 localhost。
+- [x] 2.2 [A #3] 建立 migration、資料層及 design 約定的共用交易／序列化入口，包含受理唯一鍵及後端來源映射；驗證：新資料庫可建表，違反唯一鍵被拒絕，重啟保存資料。
+- [x] 2.3 [A #3] 設定機密、資料庫與 session 排除，補 README 的真實安裝、設定與測試命令；驗證：`git status` 無本機敏感資料，另一組員能照步驟啟動。
 
 ## 3. 身分、組別與狀態（member A）
 

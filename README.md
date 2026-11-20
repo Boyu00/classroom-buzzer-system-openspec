@@ -2,20 +2,62 @@
 
 以 Google Sheets Guided Notes 為題目來源的課堂搶答系統，支援老師、學生組別、單題／題組、速度／公平模式、線上原格寫回及 CSV。
 
-**目前狀態：完成初始規劃文件，尚未實作應用程式。不能啟動或進行產品 Demo，也尚未完成線上 Sheets 授權與驗收。**
+**目前狀態：member A #3 專案骨架已可在本機啟動，提供狀態頁、健康檢查、SQLite migration 與共用交易入口。教師驗證、活動與搶答、Sheets 串接及產品驗收尚未完成。**
 
 - [完整產品規格](spec.md)：產品需求保留原第一版內容，開發方法改用 OpenSpec。
 - [提案](openspec/changes/build-classroom-buzzer/proposal.md)：目的與能力範圍。
 - [設計與 A／B 介面](openspec/changes/build-classroom-buzzer/design.md)：模型、API、交易與整合設計。
-- [實作任務](openspec/changes/build-classroom-buzzer/tasks.md)：對應既有 issues，所有實作均未完成。
+- [實作任務](openspec/changes/build-classroom-buzzer/tasks.md)：對應既有 issues，僅通過驗證者勾選。
 - [分工與交接](docs/collaboration.md)、[驗收紀錄](docs/verification.md)。
 - [第一次上傳 GitHub 教學](docs/github-first-upload.md)。
 
 ## 技術規劃
 
-Node.js、Express、SQLite；前端 HTML／CSS／原生 JavaScript；HTTP API 與 SSE；Google 服務帳戶直接讀寫原雲端 Sheets；僅在 localhost 執行。套件與 lockfile 於實作 #3 建立後提供，現階段沒有 `npm start` 或產品測試命令。
+Node.js 24.22.0（相容範圍為 24.22 以上的 24.x）、Express 5.3.0、Node 內建 SQLite；前端 HTML／CSS／原生 JavaScript。版本與依賴已記錄於 `.node-version`、`package.json`、`package-lock.json`。目前僅在 `127.0.0.1` 執行，後續以 HTTP API／SSE 與 Google Sheets API 擴充。
 
 Google 憑證放 repository 外，以環境變數提供路徑；不得提交憑證、密碼、session、本機資料庫或未移除機密的對話。`.gitignore` 是 Git 追蹤排除設定，瀏覽器手動上傳仍須自行確認選檔。
+
+## 第一次安裝與啟動（Windows PowerShell）
+
+先安裝 Node.js 24.22.0 或較新的 24.x，確認 `node --version`。不需要額外安裝 SQLite、Python 或編譯工具。
+
+在自己的專案資料夾開啟 PowerShell（本機目前是 `D:\桌面\python\classroom-buzzer-system-openspec`）：
+
+```powershell
+npm ci --ignore-scripts
+Copy-Item .env.example .env
+npm start
+```
+
+`Copy-Item` 只在第一次尚無 `.env` 時執行，已有設定時保留原檔。啟動後開啟 [本機頁面](http://127.0.0.1:3000)，應看到「環境已就緒，活動功能準備中」。[健康檢查](http://127.0.0.1:3000/api/health) 應回傳：
+
+```json
+{"data":{"status":"ok","stage":"foundation","database":"ok"}}
+```
+
+按 `Ctrl+C` 關閉。`npm run dev` 可在開發時監看程式變更並重啟。`PORT` 預設 3000；若被使用，可在 `.env` 改成 `PORT=3001`，網址也改為 3001。Host 固定為 `127.0.0.1`，不接受環境變數改成公開網路介面。
+
+若 npm 顯示憑證錯誤 `UNABLE_TO_VERIFY_LEAF_SIGNATURE`，可在該 PowerShell 視窗使用已信任的系統憑證後重試；不需關閉 TLS 驗證：
+
+```powershell
+$env:NODE_USE_SYSTEM_CA = '1'
+npm ci --ignore-scripts
+```
+
+## 資料庫與測試
+
+預設資料庫在 `data/classroom.sqlite3`，首次啟動自動建立並執行 migration。可在 `.env` 指定 `DATABASE_PATH`（相對路徑以專案根目錄計）；資料庫、journal 與本機設定不入版控。後續工作階段與教師密碼雜湊亦存本機資料庫，尚未實作身分功能，現在不需填密碼或 Google 金鑰。
+
+```powershell
+npm run db:migrate
+npm test
+```
+
+Migration 可重跑；已套用版本會核對 checksum，不可直接修改舊 SQL。後續變更新增 `002_名稱.sql`，升級前備份本機資料；不要用刪除資料庫解決 migration 錯誤。`.gitattributes` 統一文字換行，checksum 也正規化 CRLF。
+
+測試使用獨立暫存 SQLite 與隨機本機連接埠，不修改你的活動資料。現有測試涵蓋 migration、重啟保存、受理唯一鍵、跨單位外鍵、交易回滾、寫入序列／失敗恢復、本機綁定與私有檔案不公開；它們不代表 AC-01～AC-23 的產品驗收已通過。詳細結果見 [驗證紀錄](docs/verification.md)。
+
+資料層使用約定、資料表與後續擴充方式見 [資料層說明](docs/storage.md)。
 
 ## OpenSpec 流程
 
@@ -38,11 +80,11 @@ openspec validate build-classroom-buzzer --strict
 | member B（接續） | #13～#19 | Sheets 授權／匯入／映射、教師頁、結果頁、原格寫回／恢復、CSV |
 | 共同 | #1～#2、#20～#25 | 規劃、跨組對齊、測試驗收、文件、Demo、繳交 |
 
-[GitHub issues](https://github.com/Boyu00/classroom-buzzer-system-openspec/issues) 是協作追蹤依據。各自以自己的帳號開 branch、PR，由另一位實質 review。實作與驗證紀錄尚未建立，待完成後補上真實連結。
+[GitHub issues](https://github.com/Boyu00/classroom-buzzer-system-openspec/issues) 是協作追蹤依據。各自以自己的帳號開 branch、PR，由另一位實質 review。初始規劃已由 [PR #26](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/26) 合併；後續實作 PR、測試與交接紀錄依實際完成情況補上。
 
 ## 下一步
 
-1. 將初始文件以 `docs/initial-openspec` branch 開 PR，兩人檢閱規格、分工與介面。
-2. 合併後 member A 從最新 main 開自己的功能 branch，先做 #3，再依 tasks 依賴完成 #4～#12。
+1. 本機變更不會自動上傳 GitHub：需依序 commit、push 分支、建立 PR，再由另一人 review 後合併 main。其他人的變更也需 fetch／pull 才會出現在本機。
+2. 本次 #3 在 `feat/project-foundation` 實作，交由 B 依上述安裝步驟實際確認並 review。#4～#12 尚待後續分階段實作。
 3. A 測試可用明確標示的 fixture；產品真實 Sheets 匯入由 B 完成，不能用 fixture 宣稱串接完成。
 4. A 交接已驗證模型、API、結果服務與學生頁；B 完成 #13～#19，再共同真實驗收、錄影與繳交。
