@@ -1,10 +1,10 @@
 # 分工與接力紀錄
 
-初始規劃已由 PR #26 合併；member A 已實作 #3 本機骨架，尚待另一位組員依 README 安裝並 review。本次不代表 A 已完成全部核心或已正式交接 B。帳號對應依 PR #26 的實際分工留言及使用者確認。
+初始規劃 PR #26 及 #3 骨架 PR #27 已合併；Boyu00 正式核准 #27，並以 Node 24.22.3 在其電腦完成安裝、11 項測試與啟動確認。member A 正在本機分支 feat/activity-access 接續 #4／#5 與 #6 基礎 API，尚未正式交接全部核心。
 
 | 角色 | GitHub 帳號 | Issues | 現況 |
 | --- | --- | --- | --- |
-| member A | a0972776282-tech | #3～#12 | #3 已於本機分支實作並測試，#4～#12 未實作 |
+| member A | a0972776282-tech | #3～#12 | #3 已合併；#4／#5 與 #6 基礎 API 本機實作，#6 整合與 #7～#12 待後續 |
 | member B | Boyu00 | #13～#19 | 未實作 |
 | 共同 | 兩人 | #1～#2、#20～#25 | 規劃文件已產生，review／討論／交付未完成 |
 
@@ -54,19 +54,22 @@
 | 安裝與啟動方式 | #3 骨架：README 的 npm ci --ignore-scripts、npm start；完整產品尚不可操作 |
 | 測試命令與結果 | #3 骨架 npm test：11／11；產品 AC 與真實 Sheets 未測 |
 | 模型／API 變更 | 規劃見 design.md；實作差異待記錄 |
-| 已完成 issues | #3 本機實作與自動驗證完成，PR review／合併與 GitHub issue 關閉尚未完成 |
-| 未完成／已知問題 | #4～#19 與共同產品驗收未完成；#5 前需對齊 PR #26 中加入碼、組名與活動數量建議 |
+| 已完成 issues | #3 已經 PR #27 正式 review 並合併；新一批尚未開 PR |
+| 未完成／已知問題 | #4／#5 與 #6 基礎 API 待 review；#6 答案結束待 tasks 5.3、SSE 待 #8；#7～#19 及共同驗收未完成 |
 
 ## PR 與 review 證據（待填）
 
 | 功能／tasks／issues | 作者 | PR 連結 | 審閱者與實質意見連結 | 驗證證據 |
 | --- | --- | --- | --- | --- |
 | 初始規劃 #1（非功能驗收） | a0972776282-tech | [PR #26](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/26) 已合併 | Boyu00 的具體建議，尚無正式 Approve review | OpenSpec strict validation |
-| #3、tasks 2.1～2.3 骨架 | a0972776282-tech | [PR #27](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/27)，feat/project-foundation，程式提交 3735205，待合併 | 已請 Boyu00 review；安裝確認與實質意見待補 | docs/verification.md，11 項基礎測試 |
+| #3、tasks 2.1～2.3 骨架 | a0972776282-tech | [PR #27](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/27) 已合併，提交 b5dcda8 | [Boyu00 正式 Approve](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/27#pullrequestreview-5992202981)，Node 24.22.3、11／11、可啟動 | docs/verification.md |
+| #4／#5、#6 基礎控制 | a0972776282-tech | 本機 feat/activity-access；尚未上傳 | 待新 PR review，不能套用 #27 的核准 | 23 項回歸；docs/access-api.md |
 
 每人至少一筆由自己提出且已合併 PR，以及對另一人的實質 review。建立初始規劃 PR 可保留協作紀錄，但不代表功能 issues 已完成。
 
 ## 跨小組討論（待真實討論後填）
+
+2026-11-20 使用者已在本組確認採用 PR #26 的三項建議：單一未結束活動、六碼指定字元加入碼、trim 後 1～30 Unicode 字元組名；已同步 spec v1.2 與本組 artifacts。這不是與 SpecKit 小組的討論證據，以下跨組紀錄仍待真實完成。
 
 | 日期 | 參與者 | 討論事項 | 結論及規格版本 | 證據 |
 | --- | --- | --- | --- | --- |

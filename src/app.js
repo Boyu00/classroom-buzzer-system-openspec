@@ -1,6 +1,9 @@
 import express from 'express';
 import { join } from 'node:path';
 import { projectRoot } from './config.js';
+import { createAuthHttp } from './auth/http.js';
+import { HttpError } from './http-error.js';
+import { createActivityHttp } from './activities/http.js';
 
 export function createApp({ store }) {
   const app = express();
@@ -14,6 +17,10 @@ export function createApp({ store }) {
     next();
   });
   app.use(express.json({ limit: '64kb' }));
+  const access = createAuthHttp(store);
+  app.use('/api', access.guard);
+  app.use('/api', access.router);
+  app.use('/api', createActivityHttp(store, access));
 
   app.get('/api/health', (_req, res) => {
     store.read((db) => db.prepare('SELECT 1').get());
@@ -28,10 +35,11 @@ export function createApp({ store }) {
   app.use((error, _req, res, _next) => {
     const invalidJson = error.type === 'entity.parse.failed';
     const tooLarge = error.type === 'entity.too.large';
-    res.status(invalidJson ? 400 : tooLarge ? 413 : 500).json({
+    const known = error instanceof HttpError;
+    res.status(known ? error.status : invalidJson ? 400 : tooLarge ? 413 : 500).json({
       error: {
-        code: invalidJson ? 'INVALID_JSON' : tooLarge ? 'PAYLOAD_TOO_LARGE' : 'INTERNAL_ERROR',
-        message: invalidJson ? 'JSON 格式錯誤。' : tooLarge ? '請求內容過大。' : '伺服器暫時無法處理請求。',
+        code: known ? error.code : invalidJson ? 'INVALID_JSON' : tooLarge ? 'PAYLOAD_TOO_LARGE' : 'INTERNAL_ERROR',
+        message: known ? error.message : invalidJson ? 'JSON 格式錯誤。' : tooLarge ? '請求內容過大。' : '伺服器暫時無法處理請求。',
       },
     });
   });

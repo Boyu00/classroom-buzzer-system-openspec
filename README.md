@@ -2,13 +2,14 @@
 
 以 Google Sheets Guided Notes 為題目來源的課堂搶答系統，支援老師、學生組別、單題／題組、速度／公平模式、線上原格寫回及 CSV。
 
-**目前狀態：member A #3 專案骨架已可在本機啟動，提供狀態頁、健康檢查、SQLite migration 與共用交易入口。教師驗證、活動與搶答、Sheets 串接及產品驗收尚未完成。**
+**目前狀態：#3 骨架已合併；#4 教師驗證、#5 活動／組別及 #6 基礎狀態控制 API 已在本機分支實作。教師／學生操作頁、提交答案、SSE、結果計算與 Sheets 串接仍待後續，尚未完成產品驗收。**
 
 - [完整產品規格](spec.md)：產品需求保留原第一版內容，開發方法改用 OpenSpec。
 - [提案](openspec/changes/build-classroom-buzzer/proposal.md)：目的與能力範圍。
 - [設計與 A／B 介面](openspec/changes/build-classroom-buzzer/design.md)：模型、API、交易與整合設計。
 - [實作任務](openspec/changes/build-classroom-buzzer/tasks.md)：對應既有 issues，僅通過驗證者勾選。
 - [分工與交接](docs/collaboration.md)、[驗收紀錄](docs/verification.md)。
+- [身分與活動 API](docs/access-api.md)：登入、加入、權限、已確認的規則及 #6 整合邊界。
 - [第一次上傳 GitHub 教學](docs/github-first-upload.md)。
 
 ## 技術規劃
@@ -29,7 +30,7 @@ Copy-Item .env.example .env
 npm start
 ```
 
-`Copy-Item` 只在第一次尚無 `.env` 時執行，已有設定時保留原檔。啟動後開啟 [本機頁面](http://127.0.0.1:3000)，應看到「環境已就緒，活動功能準備中」。[健康檢查](http://127.0.0.1:3000/api/health) 應回傳：
+`Copy-Item` 只在第一次尚無 `.env` 時執行，已有設定時保留原檔。啟動後開啟 [本機頁面](http://127.0.0.1:3000)，應看到「活動管理基礎已就緒，操作頁面準備中」。目前操作需透過 API，該狀態頁沒有登入／加入表單。[健康檢查](http://127.0.0.1:3000/api/health) 應回傳：
 
 ```json
 {"data":{"status":"ok","stage":"foundation","database":"ok"}}
@@ -46,7 +47,7 @@ npm ci --ignore-scripts
 
 ## 資料庫與測試
 
-預設資料庫在 `data/classroom.sqlite3`，首次啟動自動建立並執行 migration。可在 `.env` 指定 `DATABASE_PATH`（相對路徑以專案根目錄計）；資料庫、journal 與本機設定不入版控。後續工作階段與教師密碼雜湊亦存本機資料庫，尚未實作身分功能，現在不需填密碼或 Google 金鑰。
+預設資料庫在 `data/classroom.sqlite3`，首次啟動自動建立並執行 migration。可在 `.env` 指定 `DATABASE_PATH`（相對路徑以專案根目錄計）；資料庫、journal 與本機設定不入版控。工作階段與教師密碼雜湊存該本機資料庫；未設定時 session 回應提示初次設定，已設定後必須輸入原密碼。不要把密碼貼到 repository／紀錄；目前不需 Google 金鑰。
 
 ```powershell
 npm run db:migrate
@@ -55,7 +56,7 @@ npm test
 
 Migration 可重跑；已套用版本會核對 checksum，不可直接修改舊 SQL。後續變更新增 `002_名稱.sql`，升級前備份本機資料；不要用刪除資料庫解決 migration 錯誤。`.gitattributes` 統一文字換行，checksum 也正規化 CRLF。
 
-測試使用獨立暫存 SQLite 與隨機本機連接埠，不修改你的活動資料。現有測試涵蓋 migration、重啟保存、受理唯一鍵、跨單位外鍵、交易回滾、寫入序列／失敗恢復、本機綁定與私有檔案不公開；它們不代表 AC-01～AC-23 的產品驗收已通過。詳細結果見 [驗證紀錄](docs/verification.md)。
+測試使用獨立暫存 SQLite 與隨機本機連接埠，不修改你的活動資料。現有 23 項測試涵蓋基礎資料層、密碼與 Cookie、Origin／CSRF、並行設定／加入、組名與活動上限、快照隱私及基礎狀態機；它們不代表 AC-01～AC-24 的產品驗收已通過。詳細結果見 [驗證紀錄](docs/verification.md)。
 
 資料層使用約定、資料表與後續擴充方式見 [資料層說明](docs/storage.md)。
 
@@ -80,11 +81,11 @@ openspec validate build-classroom-buzzer --strict
 | member B（接續） | #13～#19 | Sheets 授權／匯入／映射、教師頁、結果頁、原格寫回／恢復、CSV |
 | 共同 | #1～#2、#20～#25 | 規劃、跨組對齊、測試驗收、文件、Demo、繳交 |
 
-[GitHub issues](https://github.com/Boyu00/classroom-buzzer-system-openspec/issues) 是協作追蹤依據。各自以自己的帳號開 branch、PR，由另一位實質 review。初始規劃已由 [PR #26](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/26) 合併；後續實作 PR、測試與交接紀錄依實際完成情況補上。
+[GitHub issues](https://github.com/Boyu00/classroom-buzzer-system-openspec/issues) 是協作追蹤依據。各自以自己的帳號開 branch、PR，由另一位實質 review。[PR #26](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/26) 初始規劃與 [PR #27](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/27) #3 骨架已合併；#27 有 Boyu00 的正式 Approve 與另一台電腦的安裝／測試確認。後續實作 PR 依實際完成情況補上。
 
 ## 下一步
 
 1. 本機變更不會自動上傳 GitHub：需依序 commit、push 分支、建立 PR，再由另一人 review 後合併 main。其他人的變更也需 fetch／pull 才會出現在本機。
-2. 本次 #3 在 `feat/project-foundation` 實作，交由 B 依上述安裝步驟實際確認並 review。#4～#12 尚待後續分階段實作。
+2. 本次接續在 `feat/activity-access` 實作 #4／#5 與 #6 基礎 API，先由另一位 review。完整 #6 的即時同步與有答案結束仍待 #8／tasks 5.3；其餘 #7～#12 待後續。
 3. A 測試可用明確標示的 fixture；產品真實 Sheets 匯入由 B 完成，不能用 fixture 宣稱串接完成。
 4. A 交接已驗證模型、API、結果服務與學生頁；B 完成 #13～#19，再共同真實驗收、錄影與繳交。
