@@ -4,8 +4,9 @@ import { projectRoot } from './config.js';
 import { createAuthHttp } from './auth/http.js';
 import { HttpError } from './http-error.js';
 import { createActivityHttp } from './activities/http.js';
+import { createImportHttp } from './import/http.js';
 
-export function createApp({ store }) {
+export function createApp({ store, sheetsGateway }) {
   const app = express();
   app.disable('x-powered-by');
   app.use((_req, res, next) => {
@@ -21,6 +22,7 @@ export function createApp({ store }) {
   app.use('/api', access.guard);
   app.use('/api', access.router);
   app.use('/api', createActivityHttp(store, access));
+  app.use('/api', createImportHttp(store, access, sheetsGateway));
 
   app.get('/api/health', (_req, res) => {
     store.read((db) => db.prepare('SELECT 1').get());
@@ -39,6 +41,7 @@ export function createApp({ store }) {
     res.status(known ? error.status : invalidJson ? 400 : tooLarge ? 413 : 500).json({
       error: {
         code: known ? error.code : invalidJson ? 'INVALID_JSON' : tooLarge ? 'PAYLOAD_TOO_LARGE' : 'INTERNAL_ERROR',
+        ...(known && error.details !== undefined ? { details: error.details } : {}),
         message: known ? error.message : invalidJson ? 'JSON 格式錯誤。' : tooLarge ? '請求內容過大。' : '伺服器暫時無法處理請求。',
       },
     });
