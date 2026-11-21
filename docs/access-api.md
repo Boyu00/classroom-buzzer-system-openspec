@@ -43,4 +43,4 @@ Host 僅接受實際監聽埠的 127.0.0.1／localhost；變更 Origin 必須與
 
 ## 組員驗證
 
-執行 `npm ci --ignore-scripts`、`npm test`，應有 56 項測試通過。`tests/auth.test.js`、`tests/activities.test.js`、`tests/submissions.test.js` 驗證身分、狀態、受理、題組、排名與結果保存；新增 `tests/events.test.js`、`tests/activity-stream.test.js` 驗證 SSE 授權、隱私、重連、提示及 1 師／10 組／20 題自動情境。完整 UI、真實 Sheets 與 AC 人工驗收尚待後續，請在 review 留下實際環境與結果。
+執行 `npm ci --ignore-scripts`、`npm test`，應有 75 項測試通過。`tests/auth.test.js`、`tests/activities.test.js`、`tests/submissions.test.js` 驗證身分、狀態、受理、題組、排名與結果保存；新增 `tests/events.test.js`、`tests/activity-stream.test.js` 驗證 SSE 授權、隱私、重連、提示及 1 師／10 組／20 題自動情境。完整 UI、真實 Sheets 與 AC 人工驗收尚待後續，請在 review 留下實際環境與結果。

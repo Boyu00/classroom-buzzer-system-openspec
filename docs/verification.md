@@ -10,6 +10,7 @@
 - 2026-11-20：#4／#5、#6 基礎控制連同既有回歸共 23／23 通過；API 與整合邊界見 docs/access-api.md。
 - 2026-11-20：#7／#10、#11 排名核心與有答案結束連同回歸 37／37 通過；OpenSpec tasks 15／43。SSE、學生頁與完整人工 AC 尚未完成。
 - 2026-11-21：#8／#9、tasks 4.5～4.7 連同回歸 56／56 通過；OpenSpec 18／43。包括真實 HTTP／SSE 與共用前端狀態模組測試，未宣稱完整操作頁人工驗收。
+- 同日上傳前，發現 B 的 PR #30 已合併為 5db2bc0；整合最新 main 後再次執行，75／75 通過（包含解析器 19 項），OpenSpec 仍為 18／43。
 - 真實 Google Sheets 授權、產品人工驗收與 Demo 尚未完成。AC-01～AC-24 的完整人工驗收維持未測，不以後端自動測試代替。
 
 ## 自動驗證紀錄（實作後填寫）
@@ -26,6 +27,7 @@
 | 同上 | openspec validate build-classroom-buzzer --strict；git diff --check | 規格格式與變更空白檢查通過 | 本批規劃／追蹤一致性；不等於完整產品 Verify | 實際命令輸出；tasks 15／43 |
 | 2026-11-21，codex/live-sync-privacy，Windows、Node 24.22.0 | npm test | 56／56 通過 | 4.5～4.7；AC-04、AC-09、AC-15 的後端／連線模組自動情境 | tests/events.test.js（12 項）、tests/activity-stream.test.js（6 項）、提交後通知（1 項）與既有 37 項 |
 | 同上，1 師／10 組／20 題、11 條 SSE | npm test 中的負載情境 | OPEN 17.8 ms、最慢一般受理 163.6 ms、CLOSED 38.8 ms，均 <2 秒 | 規格本機同步與一般受理目標；9.1 的其他整合尚未完成，不整項勾選 | events.test.js 的實際診斷輸出；fixture 題目，不是線上 Sheets |
+| 同上，整合 main 5db2bc0（B PR #30）後 | npm test | 75／75 通過；OPEN 36.2 ms、最慢一般受理 260.9 ms、CLOSED 62.8 ms | 新批與組員解析器整合回歸；各目標仍 <2 秒 | 原 37＋解析器 19＋同步 12＋前端模組 6＋通知 1；無衝突 |
 
 測試先在沙箱內遇到 localhost 連線權限限制，改於核准的環境執行通過；另修正 Windows 測試清理順序，先關資料庫再移除該測試建立的暫存資料夾。上述效能只代表本機自動觀察；完整產品人工驗收、其他負載與真實 Sheets 仍待後續。
 
