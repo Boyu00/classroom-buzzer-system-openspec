@@ -103,7 +103,7 @@ test('狀態單向轉移、零題禁止開啟、模式鎖定、結束確認與�
   assert.equal((await a.request(`/api/activities/${next.result.data.activityId}/snapshot`)).status, 403);
 });
 
-test('有受理答案時，在排名實作前不能假裝產生完整結束結果', async (t) => {
+test('資料庫存在不完整受理紀錄時，不保存假結果也不結束活動', async (t) => {
   const { url, runtime } = await httpFixture(t);
   const teacher = await teacherClient(url);
   const activity = (await teacher.post('/api/activities', {})).result.data;
@@ -116,6 +116,6 @@ test('有受理答案時，在排名實作前不能假裝產生完整結束結�
     .run('fixture-submission', activity.activityId, 'fixture-unit', group.groupId, new Date().toISOString(), 1));
   const closing = await teacher.post(`/api/activities/${activity.activityId}/close`, { confirmed: true });
   assert.equal(closing.status, 409);
-  assert.equal(closing.result.error.code, 'RESULT_FINALIZATION_PENDING');
+  assert.equal(closing.result.error.code, 'INCOMPLETE_SUBMISSION');
   assert.equal((await teacher.request(`/api/activities/${activity.activityId}/snapshot`)).result.data.state, 'OPEN');
 });

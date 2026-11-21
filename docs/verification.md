@@ -4,10 +4,11 @@
 
 - 已建立 OpenSpec 初始規劃；`openspec validate build-classroom-buzzer --strict` 在產生文件時執行通過。
 - 該命令只驗證規劃格式，不驗證產品功能。
-- member A #3 已合併；本機分支另完成教師驗證、組別與活動控制基礎 API。提交答案、推播、排名與 Sheets 尚未實作。
+- member A #3～#5 與 #6 基礎 API 已合併；本機另完成提交答案、題組原子保存、速度／公平排名及固定結果。推播、操作頁與 Sheets 尚未實作。
 - 2026-11-20：依 lockfile 重裝後 11 項基礎自動測試全過，啟動頁及健康檢查回應成功，詳見下表。
-- PR #27 已獲 Boyu00 正式 Approve，以 Node 24.22.3 驗證安裝、11／11 測試與啟動，並合併為 b5dcda8；新一批的實質 review 尚未完成。
+- PR #27 已獲 Boyu00 正式 Approve，以 Node 24.22.3 驗證安裝、11／11 測試與啟動，並合併為 b5dcda8；PR #28 亦獲正式 Approve 並合併為 a78412c。最新受理／排名批次已建立 [PR #29](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/29)，尚未 review 或合併。
 - 2026-11-20：#4／#5、#6 基礎控制連同既有回歸共 23／23 通過；API 與整合邊界見 docs/access-api.md。
+- 2026-11-20：#7／#10、#11 排名核心與有答案結束連同回歸 37／37 通過；OpenSpec tasks 15／43。SSE、學生頁與完整人工 AC 尚未完成。
 - 真實 Google Sheets 授權、產品人工驗收與 Demo 尚未完成。AC-01～AC-24 的完整人工驗收維持未測，不以後端自動測試代替。
 
 ## 自動驗證紀錄（實作後填寫）
@@ -20,6 +21,8 @@
 | 同上 | npm start；GET /；GET /api/health | 頁面 HTTP 200；health 為 status ok、stage foundation、database ok | 2.1 | 實際服務回應與 HTTP 測試；僅 127.0.0.1 |
 | 同上 | git check-ignore .env data/classroom.sqlite3 data/classroom.sqlite3-wal sessions/example credentials/service-account.json node_modules/express/package.json | 列舉路徑均被排除；git status 無本機資料與憑證 | 2.3 | .gitignore 與實際命令輸出 |
 | 2026-11-20，feat/activity-access，本機 Node 24.22.0 | npm test | 23／23 通過 | 3.1～3.5 的後端 API；AC-24 自動情境 | tests/auth.test.js、tests/activities.test.js 與既有回歸 |
+| 2026-11-20，codex/answer-submission，本機 Node 24.22.0 | npm test | 37／37 通過 | 4.1～4.4、5.1～5.3；對應 AC-05～AC-11、AC-15、AC-18、AC-21～AC-23 的後端自動情境 | tests/submissions.test.js；含故障注入回滾、並行重試／相同時間戳、兩種競態順序、隱私與重啟；不含 SSE／UI／Sheets |
+| 同上 | openspec validate build-classroom-buzzer --strict；git diff --check | 規格格式與變更空白檢查通過 | 本批規劃／追蹤一致性；不等於完整產品 Verify | 實際命令輸出；tasks 15／43 |
 
 測試先在沙箱內遇到 localhost 連線權限限制，改於核准的環境執行通過；另修正 Windows 測試清理順序，先關資料庫再移除該測試建立的暫存資料夾。所有產品驗收、效能與真實 Sheets 仍待後續。
 
@@ -61,8 +64,8 @@
 | 項目 | 狀態 | 證據 |
 | --- | --- | --- |
 | DC-01 每人 PR 與實質 review | A 的已合併 PR 與 B 的正式 review 已有；B 的 PR 及 A 的 review 尚待後續 | PR #27 與 review-5992202981 |
-| DC-02 能力文件與實作追溯 | 規劃文件及 #3 基礎實作已建立，其餘未完成 | tasks 2.1～2.3、docs/storage.md |
-| DC-03 OpenSpec 完整流程 | Propose 完成、Apply 僅完成 #3；完整 Verify／Sync／Archive 未完成 | 初始規劃 PR #26；後續實作 PR 待補 |
+| DC-02 能力文件與實作追溯 | 骨架、身分活動及受理／題組／排名核心已建立，其餘未完成 | tasks 已勾 15／43；docs/storage.md、docs/access-api.md、docs/submission-results-api.md |
+| DC-03 OpenSpec 完整流程 | Propose 完成、Apply 15／43；完整 Verify／Sync／Archive 未完成 | PR #26～#28 已合併；最新受理／排名批次待 review |
 | DC-04 與 SpecKit 小組一致性討論 | 待真實討論紀錄 | — |
 | DC-05 AI 對話、文件與產品一致 | 未完成 | — |
 | DC-06 五分鐘內完整 Demo | 未完成 | — |
