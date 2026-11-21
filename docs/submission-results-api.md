@@ -1,6 +1,6 @@
 # 受理與固定結果 API
 
-2026-11-20，本機完成 #7 受理、#10 題組、#11 排名核心及 tasks 5.3 的有答案結束流程；使用既有 Cookie、Origin／CSRF，操作方式見 [身分與活動 API](access-api.md)。產品操作頁、SSE、真實 Sheets 匯入仍待整合；沒有可供使用者假匯入題目的端點。
+2026-11-20 完成 #7 受理、#10 題組、#11 排名核心及 tasks 5.3 的有答案結束流程，已經 PR #29 review 合併；使用既有 Cookie、Origin／CSRF，操作方式見 [身分與活動 API](access-api.md)。2026-11-21 新增 [SSE 同步](live-sync-api.md)；產品完整操作頁與真實 Sheets 匯入仍待整合，沒有可供使用者假匯入題目的端點。
 
 ## 學生送出
 
@@ -32,7 +32,7 @@
 
 全活動序號可能透露他組送出數量，因此結束前學生成功回覆及快照均隱藏該欄位。內部資料庫與教師監看保留序號；CLOSED 後公開完整序號與順位。這是依根目錄 spec.md 既有隱私規則修正原 design 的回覆範例。
 
-尚無 `/events`；不能以快照測試代表 #8 SSE 或 #9 全通道隱私驗收完成。
+`/events` 已實作並共用上述授權快照；API、SSE、錯誤及他組事件抑制已有自動測試。完整瀏覽器頁面與人工 AC 仍待整合，詳見 [同步 API](live-sync-api.md)。
 
 ## 結束與結果
 
@@ -64,10 +64,12 @@ SPEED 每單位按 acceptedOrder 升序完整排名，rank=1 唯一勝出。FAIR
 
 結果 API 直接讀保存的 results，不在 GET 時重新計算。B 的結果頁、Sheets 寫回、CSV 須共用同份順位與 winnerSubmissionId，利用後端來源映射找到各題原格，不另算排名。資料表與已套用 migration 未修改，不需刪除既有資料庫。
 
+PR #29 review 補充：results 的 questions 只有題號與順序，不含原格座標。B 的寫回／CSV 由後端直接查 questions 資料表映射，不能從學生結果回應猜座標。CLOSED 回應目前不保留頂層 joinCode／groups；未送出的組不虛構 submission，CSV 依受理逐題展開，無人作答題保留一列。若將來教師頁需要全部組別名單，另確認欄位需求再擴充，不改現有結果語意。
+
 ## 錯誤與驗證
 
 常見 code：400 INVALID_ANSWERS；404 UNIT_NOT_FOUND；409 INVALID_PHASE／RESULTS_NOT_READY／INCOMPLETE_SUBMISSION；401 SESSION_REQUIRED／STUDENT_REQUIRED；403 STUDENT_REQUIRED／ACTIVITY_FORBIDDEN。其餘 Host、Origin、CSRF 檢查與既有 API 一致。資料庫故障只回通用 500，不回 SQL 或他組資料。
 
-`npm test`：目前 37／37 通過。新增 tests/submissions.test.js 包含 1,000 emoji 邊界、原文保存、12 次並行重試、相同時間戳、題組故障回滾、兩種佇列競態順序、HTTP 競態、API 隱私、完整排名、題組勝次、空單位、結果中途故障與 OPEN／CLOSED 重啟。
+`npm test`：目前 56／56 通過。tests/submissions.test.js 包含 1,000 emoji 邊界、原文保存、12 次並行重試、相同時間戳、題組故障回滾、兩種佇列競態順序、HTTP 競態、API 隱私、完整排名、題組勝次、空單位、結果中途故障與 OPEN／CLOSED 重啟；新增同步測試見 docs/live-sync-api.md。
 
-題目與故障 trigger 僅在獨立測試資料庫建立；不修改使用者活動，亦不代表真實 Sheets、操作頁面、SSE 或完整人工 AC 已通過。
+題目與故障 trigger 僅在獨立測試資料庫建立；不修改使用者活動，亦不代表真實 Sheets、完整操作頁面或人工 AC 已通過。

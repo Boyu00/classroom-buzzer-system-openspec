@@ -1,6 +1,6 @@
 # #3 資料層與擴充約定
 
-目前只完成資料表及交易基礎，沒有教師登入、建立活動、提交答案、排名計算或 Sheets HTTP API。這些規則由後續 issues 的服務層實作。
+目前已完成資料層、教師／活動、受理／排名及 SSE 核心；Sheets HTTP API 與完整操作頁仍待後續。下列共用入口是 A／B 整合依據。
 
 ## 目錄與入口
 
@@ -26,11 +26,11 @@ await store.write(activityId, (db) => {
 await store.close();
 ```
 
-以上是介面範例，`activityId` 由後續活動服務提供；它不是目前可呼叫的產品功能。`read` 回呼僅供同步查詢，不用來寫入；所有寫入統一使用 `write`。跨活動的全域設定可使用明確全域鎖識別碼，呼叫順序由服務層規劃，禁止在同一活動回呼內再等待另一個 write。
+以上是資料層介面範例，`activityId` 由活動服務提供。`read` 回呼僅供同步查詢，不用來寫入；所有寫入統一使用 `write`。跨活動的全域設定可使用明確全域鎖識別碼，呼叫順序由服務層規劃，禁止在同一活動回呼內再等待另一個 write。
 
 `write(activityId, callback)` 將相同活動工作依呼叫順序排隊，回呼以 `BEGIN IMMEDIATE`／`COMMIT` 執行，例外 `ROLLBACK`。SQLite 單連線同步交易確保不同活動也不會同時持有這個連線的交易。此基礎只適用單程序，不能宣稱多實例同步。
 
-外部 Google 呼叫在交易之外進行；回來後以同一入口再次核對活動狀態／匯入 revision／匯出紀錄。SSE 通知只能在 write 成功 resolve 後發送。`close()` 拒絕新工作、等待已排寫入，再關閉 DB。
+外部 Google 呼叫在交易之外進行；回來後以同一入口再次核對活動狀態／匯入 revision／匯出紀錄。`write` 現在在 COMMIT 後、Promise resolve 前同步通知 `store.subscribe(listener)`；回滾不通知。通知僅有鎖識別碼，由 SSE 重新授權並建立各連線快照；通知故障不把已提交交易誤報失敗，無需 B 另行廣播。subscribe 回傳取消訂閱函式，listener 須同步且不可在通知內寫入。詳見 [同步 API](live-sync-api.md)。`close()` 拒絕新工作、等待已排寫入、清除訂閱再關閉 DB；server 先關閉 SSE，避免長連線阻止停止。
 
 ## 初始資料表
 

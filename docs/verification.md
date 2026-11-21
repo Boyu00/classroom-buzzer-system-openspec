@@ -4,11 +4,12 @@
 
 - 已建立 OpenSpec 初始規劃；`openspec validate build-classroom-buzzer --strict` 在產生文件時執行通過。
 - 該命令只驗證規劃格式，不驗證產品功能。
-- member A #3～#5 與 #6 基礎 API 已合併；本機另完成提交答案、題組原子保存、速度／公平排名及固定結果。推播、操作頁與 Sheets 尚未實作。
+- member A 骨架、身分活動、受理／題組與排名已經 PR #27～#29 合併。本批完成 SSE、重連及各通道隱私自動測試；完整操作頁與 Sheets 尚未完成。
 - 2026-11-20：依 lockfile 重裝後 11 項基礎自動測試全過，啟動頁及健康檢查回應成功，詳見下表。
-- PR #27 已獲 Boyu00 正式 Approve，以 Node 24.22.3 驗證安裝、11／11 測試與啟動，並合併為 b5dcda8；PR #28 亦獲正式 Approve 並合併為 a78412c。最新受理／排名批次已建立 [PR #29](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/29)，尚未 review 或合併。
+- PR #27、#28、#29 均獲 Boyu00 正式 Approve 並合併，分別為 b5dcda8、a78412c、85fe739；各 review 與測試見 docs/collaboration.md。本批同步／隱私尚待 review。
 - 2026-11-20：#4／#5、#6 基礎控制連同既有回歸共 23／23 通過；API 與整合邊界見 docs/access-api.md。
 - 2026-11-20：#7／#10、#11 排名核心與有答案結束連同回歸 37／37 通過；OpenSpec tasks 15／43。SSE、學生頁與完整人工 AC 尚未完成。
+- 2026-11-21：#8／#9、tasks 4.5～4.7 連同回歸 56／56 通過；OpenSpec 18／43。包括真實 HTTP／SSE 與共用前端狀態模組測試，未宣稱完整操作頁人工驗收。
 - 真實 Google Sheets 授權、產品人工驗收與 Demo 尚未完成。AC-01～AC-24 的完整人工驗收維持未測，不以後端自動測試代替。
 
 ## 自動驗證紀錄（實作後填寫）
@@ -23,8 +24,10 @@
 | 2026-11-20，feat/activity-access，本機 Node 24.22.0 | npm test | 23／23 通過 | 3.1～3.5 的後端 API；AC-24 自動情境 | tests/auth.test.js、tests/activities.test.js 與既有回歸 |
 | 2026-11-20，codex/answer-submission，本機 Node 24.22.0 | npm test | 37／37 通過 | 4.1～4.4、5.1～5.3；對應 AC-05～AC-11、AC-15、AC-18、AC-21～AC-23 的後端自動情境 | tests/submissions.test.js；含故障注入回滾、並行重試／相同時間戳、兩種競態順序、隱私與重啟；不含 SSE／UI／Sheets |
 | 同上 | openspec validate build-classroom-buzzer --strict；git diff --check | 規格格式與變更空白檢查通過 | 本批規劃／追蹤一致性；不等於完整產品 Verify | 實際命令輸出；tasks 15／43 |
+| 2026-11-21，codex/live-sync-privacy，Windows、Node 24.22.0 | npm test | 56／56 通過 | 4.5～4.7；AC-04、AC-09、AC-15 的後端／連線模組自動情境 | tests/events.test.js（12 項）、tests/activity-stream.test.js（6 項）、提交後通知（1 項）與既有 37 項 |
+| 同上，1 師／10 組／20 題、11 條 SSE | npm test 中的負載情境 | OPEN 17.8 ms、最慢一般受理 163.6 ms、CLOSED 38.8 ms，均 <2 秒 | 規格本機同步與一般受理目標；9.1 的其他整合尚未完成，不整項勾選 | events.test.js 的實際診斷輸出；fixture 題目，不是線上 Sheets |
 
-測試先在沙箱內遇到 localhost 連線權限限制，改於核准的環境執行通過；另修正 Windows 測試清理順序，先關資料庫再移除該測試建立的暫存資料夾。所有產品驗收、效能與真實 Sheets 仍待後續。
+測試先在沙箱內遇到 localhost 連線權限限制，改於核准的環境執行通過；另修正 Windows 測試清理順序，先關資料庫再移除該測試建立的暫存資料夾。上述效能只代表本機自動觀察；完整產品人工驗收、其他負載與真實 Sheets 仍待後續。
 
 ## 人工驗收前提
 
@@ -64,8 +67,8 @@
 | 項目 | 狀態 | 證據 |
 | --- | --- | --- |
 | DC-01 每人 PR 與實質 review | A 的已合併 PR 與 B 的正式 review 已有；B 的 PR 及 A 的 review 尚待後續 | PR #27 與 review-5992202981 |
-| DC-02 能力文件與實作追溯 | 骨架、身分活動及受理／題組／排名核心已建立，其餘未完成 | tasks 已勾 15／43；docs/storage.md、docs/access-api.md、docs/submission-results-api.md |
-| DC-03 OpenSpec 完整流程 | Propose 完成、Apply 15／43；完整 Verify／Sync／Archive 未完成 | PR #26～#28 已合併；最新受理／排名批次待 review |
+| DC-02 能力文件與實作追溯 | 骨架、身分、受理／排名及 SSE 核心已建立，其餘未完成 | tasks 18／43；docs/storage.md、docs/access-api.md、docs/submission-results-api.md、docs/live-sync-api.md |
+| DC-03 OpenSpec 完整流程 | Propose 完成、Apply 18／43；完整 Verify／Sync／Archive 未完成 | PR #26～#29 已合併；最新同步／隱私批次待 review |
 | DC-04 與 SpecKit 小組一致性討論 | 待真實討論紀錄 | — |
 | DC-05 AI 對話、文件與產品一致 | 未完成 | — |
 | DC-06 五分鐘內完整 Demo | 未完成 | — |

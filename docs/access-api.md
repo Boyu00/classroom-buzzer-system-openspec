@@ -1,6 +1,6 @@
 # 教師驗證、組別與活動控制 API（#4～#6）
 
-這批提供後端 API，操作頁面仍由後續 #12／#15 負責。尚無真實 Sheets 匯入、提交答案、SSE 或排名功能；不要以測試 fixture 宣稱完成產品驗收。
+這批提供後端 API，完整操作頁面仍由後續 #12／#15 負責。提交答案、排名與 SSE 已實作，真實 Sheets 匯入尚未完成；不要以測試 fixture 宣稱完成產品驗收。
 
 ## 工作階段與呼叫順序
 
@@ -33,7 +33,7 @@ Cookie 為 `classroom_session`，32 隨機 bytes 的 base64url 值，HttpOnly、
 
 目前可驗證含答案或無人作答活動的 PREPARING → OPEN → CLOSED，零題、重複或逆向轉移均拒絕，結束必須 boolean true 確認。產品目前沒有匯入端點，因此只能由自動測試 fixture 覆蓋開啟情境；真實操作須待 #13～#15 完成。
 
-tasks 5.3 已接入完整 SPEED／FAIR 排名與 CLOSED 同交易保存，移除舊暫時限制 RESULT_FINALIZATION_PENDING；提交與結束共用同活動佇列，故障全部回滾。受理、快照、固定結果與 B 整合格式見 [受理與結果 API](submission-results-api.md)。#8 的 SSE 與 2 秒階段推播尚未完成，#6 全部人工驗收仍待整合。
+tasks 5.3 已接入完整 SPEED／FAIR 排名與 CLOSED 同交易保存，移除舊暫時限制 RESULT_FINALIZATION_PENDING；提交與結束共用同活動佇列，故障全部回滾。受理、快照、固定結果與 B 整合格式見 [受理與結果 API](submission-results-api.md)。#8／#9 已有授權 SSE、自動測試與共用文字連線提示，見 [同步 API](live-sync-api.md)；#6 全部人工驗收仍待完整頁面及 Sheets 整合。
 
 ## 錯誤與安全
 
@@ -43,4 +43,4 @@ Host 僅接受實際監聽埠的 127.0.0.1／localhost；變更 Origin 必須與
 
 ## 組員驗證
 
-執行 `npm ci --ignore-scripts`、`npm test`，應有 37 項測試通過。`tests/auth.test.js` 驗證密碼、session 旋轉與重啟、Origin／CSRF、偽造角色、並行設定；`tests/activities.test.js` 驗證新規則、並行加入、快照隱私與單向狀態；新增 `tests/submissions.test.js` 驗證受理、題組、競態、排名與結果保存。完整 UI、效能、Sheets 與 AC 人工驗收尚待後續，請在 review 留下實際環境與結果。
+執行 `npm ci --ignore-scripts`、`npm test`，應有 56 項測試通過。`tests/auth.test.js`、`tests/activities.test.js`、`tests/submissions.test.js` 驗證身分、狀態、受理、題組、排名與結果保存；新增 `tests/events.test.js`、`tests/activity-stream.test.js` 驗證 SSE 授權、隱私、重連、提示及 1 師／10 組／20 題自動情境。完整 UI、真實 Sheets 與 AC 人工驗收尚待後續，請在 review 留下實際環境與結果。
