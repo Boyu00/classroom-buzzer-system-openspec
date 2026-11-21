@@ -6,7 +6,7 @@
 - 該命令只驗證規劃格式，不驗證產品功能。
 - member A 骨架、身分活動、受理／題組與排名已經 PR #27～#29 合併。本批完成 SSE、重連及各通道隱私自動測試；完整操作頁與 Sheets 尚未完成。
 - 2026-11-20：依 lockfile 重裝後 11 項基礎自動測試全過，啟動頁及健康檢查回應成功，詳見下表。
-- PR #27、#28、#29 均獲 Boyu00 正式 Approve 並合併，分別為 b5dcda8、a78412c、85fe739；各 review 與測試見 docs/collaboration.md。本批同步／隱私尚待 review。
+- PR #27、#28、#29 均獲 Boyu00 正式 Approve 並合併，分別為 b5dcda8、a78412c、85fe739；各 review 與測試見 docs/collaboration.md。本批同步／隱私已建立 [PR #31](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/31)，尚待 review、未合併。
 - 2026-11-20：#4／#5、#6 基礎控制連同既有回歸共 23／23 通過；API 與整合邊界見 docs/access-api.md。
 - 2026-11-20：#7／#10、#11 排名核心與有答案結束連同回歸 37／37 通過；OpenSpec tasks 15／43。SSE、學生頁與完整人工 AC 尚未完成。
 - 2026-11-21：#8／#9、tasks 4.5～4.7 連同回歸 56／56 通過；OpenSpec 18／43。包括真實 HTTP／SSE 與共用前端狀態模組測試，未宣稱完整操作頁人工驗收。

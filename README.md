@@ -88,6 +88,6 @@ openspec validate build-classroom-buzzer --strict
 ## 下一步
 
 1. 本機變更不會自動上傳 GitHub：需依序 commit、push 分支、建立 PR，再由另一人 review 後合併 main。其他人的變更也需 fetch／pull 才會出現在本機。
-2. [PR #29](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/29) 已經 Boyu00 正式 Approve 並合併（85fe739）。本批 `codex/live-sync-privacy` 完成 #8／#9 與 tasks 4.5～4.7；經測試後上傳開 PR。下一步為 #12 學生頁；學生 Cookie 遺失／登出後的恢復方式須在 #12 前確認，不能僅靠組名接管。
+2. [PR #29](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/29) 已經 Boyu00 正式 Approve 並合併（85fe739）。本批 `codex/live-sync-privacy` 完成 #8／#9 與 tasks 4.5～4.7，已建立 [PR #31](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/31)，75／75 通過，待組員 review、尚未合併。下一步為 #12 學生頁；學生 Cookie 遺失／登出後的恢復方式須在 #12 前確認，不能僅靠組名接管。
 3. A 測試可用明確標示的 fixture；產品真實 Sheets 匯入由 B 完成，不能用 fixture 宣稱串接完成。
 4. A 交接已驗證模型、API、結果服務與學生頁；B 完成 #13～#19，再共同真實驗收、錄影與繳交。
