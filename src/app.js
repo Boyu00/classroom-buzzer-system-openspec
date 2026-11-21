@@ -4,6 +4,7 @@ import { projectRoot } from './config.js';
 import { createAuthHttp } from './auth/http.js';
 import { HttpError } from './http-error.js';
 import { createActivityHttp } from './activities/http.js';
+import { createEventHttp } from './events/http.js';
 
 export function createApp({ store }) {
   const app = express();
@@ -21,6 +22,9 @@ export function createApp({ store }) {
   app.use('/api', access.guard);
   app.use('/api', access.router);
   app.use('/api', createActivityHttp(store, access));
+  const events = createEventHttp(store, access);
+  app.use('/api', events.router);
+  app.locals.closeEvents = () => events.close();
 
   app.get('/api/health', (_req, res) => {
     store.read((db) => db.prepare('SELECT 1').get());
