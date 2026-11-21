@@ -79,7 +79,7 @@ export function parseSheets(sheets) {
         }
         questionSites.set(parsed.questionId, location);
         scanned.push({
-          questionId: parsed.questionId, groupCode: parsed.groupCode, originalMarker: parsed.marker,
+          questionId: parsed.questionId, groupCode: parsed.groupCode, originalMarker: parsed.raw,
           spreadsheetId: sheet.spreadsheetId, sheetId: sheet.sheetId, rowIndex: row, columnIndex: column, location,
         });
       });

@@ -12,8 +12,9 @@ function sheet(title, sheetId, placements = [], { merges = [], rows = 20, column
 const ids = (result) => result.units.map((u) => u.questions.map((q) => q.questionId));
 
 test('標記：單題、題組、前後空白與識別字字元集', () => {
-  assert.deepEqual(parseMarker('{{Q:1}}'), { ok: true, questionId: '1', groupCode: null, marker: '{{Q:1}}' });
-  assert.deepEqual(parseMarker('  {{Q:2|G:A}} \n'), { ok: true, questionId: '2', groupCode: 'A', marker: '{{Q:2|G:A}}' });
+  assert.deepEqual(parseMarker('{{Q:1}}'), { ok: true, questionId: '1', groupCode: null, marker: '{{Q:1}}', raw: '{{Q:1}}' });
+  assert.deepEqual(parseMarker('  {{Q:2|G:A}} \n'),
+    { ok: true, questionId: '2', groupCode: 'A', marker: '{{Q:2|G:A}}', raw: '  {{Q:2|G:A}} \n' });
   assert.equal(parseMarker('{{Q:a.b_c-9}}').ok, true);
   assert.equal(parseMarker('一般文字'), null);
   assert.equal(parseMarker(''), null);
@@ -53,6 +54,23 @@ test('結構指紋對相同結構穩定，對標題、尺寸、合併範圍的�
   assert.notEqual(fp(base()), fp({ ...base(), title: 'T' }));
   assert.notEqual(fp(base()), fp({ ...base(), rowCount: 21 }));
   assert.notEqual(fp(base()), fp({ ...base(), merges: [] }));
+});
+
+test('原格值含前後空白與換行時解析成功，originalMarker 逐字保留完整原值', () => {
+  const raw = ['  {{Q:1}} \n', '\t{{Q:2|G:X}}', '{{Q:3|G:X}}\r\n', '{{Q:4}}'];
+  const result = parseSheets([sheet('S', 1, raw.map((text, row) => [row, 0, text]))]);
+  assert.equal(result.ok, true);
+  const markers = result.units.flatMap((u) => u.questions.map((q) => [q.questionId, q.originalMarker]));
+  assert.deepEqual(markers, [['1', raw[0]], ['2', raw[1]], ['3', raw[2]], ['4', raw[3]]]);
+});
+
+test('原格只有前後空白改變時，結構指紋也跟著改變（避免寫回核對漏判）', () => {
+  const fp = (text) => parseSheets([sheet('S', 1, [[0, 0, text]])]).structureFingerprint;
+  const plain = fp('{{Q:1}}');
+  assert.notEqual(fp('  {{Q:1}} \n'), plain);
+  assert.notEqual(fp('{{Q:1}} '), plain);
+  assert.notEqual(fp(' {{Q:1}}'), fp('{{Q:1}} '));
+  assert.equal(fp('{{Q:1}}'), plain);
 });
 
 test('AC-17：兩單題加分散三題題組，得到 5 題 3 單位，順序依首成員位置固定', () => {
