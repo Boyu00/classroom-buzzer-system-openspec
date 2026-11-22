@@ -47,9 +47,26 @@ $env:NODE_USE_SYSTEM_CA = '1'
 npm ci --ignore-scripts
 ```
 
+## Google Sheets 設定（#13）
+
+老師的 Guided Notes 由後端以服務帳戶直接讀取（不經 .xlsx）。金鑰只放在你自己的電腦、repository 外，不得提交、貼到文件或對話。
+
+1. 在 Google Cloud Console 建立專案，啟用 **Google Sheets API**（不需要 Drive API）。建議用個人帳號；部分學校帳號的組織政策禁止建立服務帳戶金鑰。
+2. 建立服務帳戶（不需授予專案角色），在「金鑰」新增 JSON 金鑰並下載，存到 repository 以外的資料夾（例如 `C:/Users/你的帳號/secret/`）。金鑰外洩時請立即在同一頁面刪除。
+3. 把老師的試算表副本「共用」給服務帳戶的 email（格式 `名稱@專案.iam.gserviceaccount.com`）。只讀取需要檢視者；結束後寫回原格需要**編輯者**。教師頁在權限不足時也會顯示該 email。
+4. 在 `.env`（已被 .gitignore 排除）設定金鑰路徑，路徑建議用正斜線：
+
+```
+GOOGLE_APPLICATION_CREDENTIALS=C:/Users/你的帳號/secret/你的服務帳戶金鑰.json
+```
+
+5. 啟動 `npm start`，主控台會顯示「Google Sheets 讀取已啟用」。憑證不存在或無效時服務仍會啟動，只印出不含路徑與內容的警告，匯入回報「尚未設定」。
+
+使用 scope `https://www.googleapis.com/auth/spreadsheets`。單張工作表上限 200,000 格、所選工作表合計 500,000 格；每次 Google 請求逾時 15 秒。API 與錯誤碼見 [docs/import-api.md](docs/import-api.md)。
+
 ## 資料庫與測試
 
-預設資料庫在 `data/classroom.sqlite3`，首次啟動自動建立並執行 migration。可在 `.env` 指定 `DATABASE_PATH`（相對路徑以專案根目錄計）；資料庫、journal 與本機設定不入版控。工作階段與教師密碼雜湊存該本機資料庫；未設定時 session 回應提示初次設定，已設定後必須輸入原密碼。不要把密碼貼到 repository／紀錄；目前不需 Google 金鑰。
+預設資料庫在 `data/classroom.sqlite3`，首次啟動自動建立並執行 migration。可在 `.env` 指定 `DATABASE_PATH`（相對路徑以專案根目錄計）；資料庫、journal 與本機設定不入版控。工作階段與教師密碼雜湊存該本機資料庫；未設定時 session 回應提示初次設定，已設定後必須輸入原密碼。不要把密碼貼到 repository／紀錄；Sheets 匯入需要 Google 服務帳戶金鑰，設定方式見下節。
 
 ```powershell
 npm run db:migrate
