@@ -269,3 +269,77 @@ test('HTTP：未登入不能列出工作表；沒有 gateway 回 503；無效網
   const anonymous = await fetch(`${configured.url}${listPath}`, { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: configured.url }, body: '{}' });
   assert.ok([401, 403].includes(anonymous.status));
 });
+
+/* ---------- 回歸（review #33）：取得 token 也要有期限 ---------- */
+const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+test('回歸（review #33）：取得 token 卡住時，在設定期限內以 SHEETS_UNAVAILABLE 結束，且不呼叫 Sheets', async (t) => {
+  const fake = await fakeSheets(t, () => undefined);
+  const hung = gatewayFor(fake.baseUrl, { timeoutMs: 30, getAccessToken: () => new Promise(() => {}) });
+  for (const call of [() => hung.listSheets({ spreadsheet: ID }), () => hung.readSheets({ spreadsheet: ID, sheetIds: [0] })]) {
+    const started = Date.now();
+    const error = await rejects(call());
+    assert.ok(Date.now() - started < 1000, `應在期限附近結束，實際 ${Date.now() - started}ms`);
+    assert.deepEqual([error.status, error.code], [502, 'SHEETS_UNAVAILABLE']);
+    assert.match(error.message, /逾時/);
+    for (const secret of [TOKEN, 'TOP-SECRET', 'PRIVATE KEY']) assert.equal(error.message.includes(secret), false);
+  }
+  assert.equal(fake.requests.length, 0, '授權沒完成就不應呼叫 Sheets');
+});
+
+test('授權卡住時共用同一個進行中的請求，逾時後才重新嘗試（不在背景無限累積）', async (t) => {
+  const fake = await fakeSheets(t, () => undefined);
+  let attempts = 0;
+  const gateway = gatewayFor(fake.baseUrl, { timeoutMs: 40, getAccessToken: () => { attempts += 1; return new Promise(() => {}); } });
+  const [a, b, c] = await Promise.all([
+    rejects(gateway.listSheets({ spreadsheet: ID })), rejects(gateway.listSheets({ spreadsheet: ID })),
+    rejects(gateway.readSheets({ spreadsheet: ID, sheetIds: [0] })),
+  ]);
+  assert.deepEqual([a.code, b.code, c.code], ['SHEETS_UNAVAILABLE', 'SHEETS_UNAVAILABLE', 'SHEETS_UNAVAILABLE']);
+  assert.equal(attempts, 1, '同時進行的操作共用一個授權請求');
+  await pause(80);
+  await rejects(gateway.listSheets({ spreadsheet: ID }));
+  assert.equal(attempts, 2, '期限過後才允許重新嘗試');
+  assert.equal(fake.requests.length, 0);
+});
+
+test('首次授權失敗不會被快取；之後恢復即可正常使用', async (t) => {
+  const fake = await fakeSheets(t, () => undefined);
+  let attempts = 0;
+  const gateway = gatewayFor(fake.baseUrl, { getAccessToken: async () => {
+    attempts += 1;
+    if (attempts === 1) throw Object.assign(new Error('invalid_grant: secret detail'), { response: { status: 400 } });
+    return TOKEN;
+  } });
+  const first = await rejects(gateway.listSheets({ spreadsheet: ID }));
+  assert.deepEqual([first.status, first.code], [503, 'SHEETS_AUTH_FAILED']);
+  assert.equal(first.message.includes('secret detail'), false);
+  assert.equal(fake.requests.length, 0);
+  assert.equal((await gateway.listSheets({ spreadsheet: ID })).sheets.length, 2);
+  assert.equal(fake.requests.length, 1);
+});
+
+test('已取得過 token 後，更新失敗會明確回報、不呼叫 Sheets，恢復後可再用', async (t) => {
+  const fake = await fakeSheets(t, () => undefined);
+  let attempts = 0;
+  const gateway = gatewayFor(fake.baseUrl, { getAccessToken: async () => {
+    attempts += 1;
+    if (attempts === 2) throw new Error('getaddrinfo ENOTFOUND oauth2.googleapis.com');
+    return TOKEN;
+  } });
+  assert.equal((await gateway.listSheets({ spreadsheet: ID })).sheets.length, 2);
+  assert.equal(fake.requests.length, 1);
+  const refresh = await rejects(gateway.listSheets({ spreadsheet: ID }));
+  assert.deepEqual([refresh.status, refresh.code], [502, 'SHEETS_UNAVAILABLE']);
+  assert.equal(refresh.message.includes('ENOTFOUND'), false);
+  assert.equal(fake.requests.length, 1, '更新失敗時沒有新的 Sheets 請求');
+  assert.equal((await gateway.listSheets({ spreadsheet: ID })).sheets.length, 2);
+  assert.equal(fake.requests.length, 2);
+});
+
+test('授權較慢但在期限內完成時正常運作，計時器不會讓程序卡住', async (t) => {
+  const fake = await fakeSheets(t, () => undefined);
+  const gateway = gatewayFor(fake.baseUrl, { timeoutMs: 500, getAccessToken: async () => { await pause(20); return TOKEN; } });
+  assert.equal((await gateway.listSheets({ spreadsheet: ID })).title, '測試試算表');
+  assert.equal(fake.requests[0].auth, `Bearer ${TOKEN}`);
+});

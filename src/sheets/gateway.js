@@ -33,22 +33,55 @@ export function createSheetsGateway({ credentials, baseUrl = DEFAULT_BASE_URL, t
   let client;
   const tokenSource = getAccessToken ?? (async () => {
     // 服務帳戶金鑰直接用 JWT 用戶端；library 會快取並在到期前自動更新 token。
-    client ??= new JWT({ email: credentials.client_email, key: credentials.private_key, scopes: [SCOPE] });
+    // transporterOptions.timeout 讓底層授權請求在期限到時真的被取消，不會留在背景。
+    client ??= new JWT({
+      email: credentials.client_email, key: credentials.private_key, scopes: [SCOPE],
+      transporterOptions: { timeout: timeoutMs },
+    });
     const { token } = await client.getAccessToken();
     if (!token) throw new Error('empty token');
     return token;
   });
 
+  // 取得（或更新）token 也必須有期限，否則授權卡住時，教師畫面會一直等待而 fetch 逾時完全沒機會生效。
+  // 同一時間只保留一個進行中的授權請求並共用；逾時後釋放，下一次操作才重新嘗試，
+  // 避免卡住的請求在背景無限制累積。
+  let inflight = null;
+  function acquireToken() {
+    if (!inflight) {
+      const entry = {};
+      const release = () => { clearTimeout(entry.timer); if (inflight === entry) inflight = null; };
+      entry.attempt = tokenSource();
+      entry.attempt.then(release, release);
+      entry.timer = setTimeout(release, timeoutMs);
+      entry.timer.unref?.();
+      inflight = entry;
+    }
+    return inflight.attempt;
+  }
+
+  const TOKEN_TIMEOUT = Symbol('token-timeout');
+  async function tokenWithDeadline() {
+    let timer;
+    const deadline = new Promise((_resolve, reject) => { timer = setTimeout(() => reject(TOKEN_TIMEOUT), timeoutMs); });
+    try {
+      return await Promise.race([acquireToken(), deadline]);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   async function request(path, { method = 'GET', body } = {}) {
     let token;
     try {
-      token = await tokenSource();
+      token = await tokenWithDeadline();
     } catch (error) {
       const status = error?.response?.status ?? error?.status;
       if (status === 400 || status === 401) {
         throw new HttpError(503, 'SHEETS_AUTH_FAILED', '服務帳戶授權失敗，請確認金鑰有效且未被停用。');
       }
-      throw new HttpError(502, 'SHEETS_UNAVAILABLE', '無法連線到 Google 授權服務，請檢查網路後再試。');
+      const message = error === TOKEN_TIMEOUT ? 'Google 授權服務回應逾時，請稍後再試。' : '無法連線到 Google 授權服務，請檢查網路後再試。';
+      throw new HttpError(502, 'SHEETS_UNAVAILABLE', message);
     }
 
     let response;
