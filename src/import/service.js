@@ -83,6 +83,8 @@ export function createImportService(store, auth, gateway, { now = Date.now } = {
       const request = validateRequest(body);
       const activity = store.read((db) => getActivity(db, activityId));
       requirePreparing(activity);
+      // 外部讀取可能很慢；先記下開始時的匯入修訂號，回來後必須仍相同，否則舊讀取會蓋掉新匯入。
+      const startedRevision = activity.import_revision;
       const sheets = await callGateway(() => gateway.readSheets(request));
 
       const parsed = parseSheets(sheets);
@@ -96,6 +98,10 @@ export function createImportService(store, auth, gateway, { now = Date.now } = {
         const teacher = auth.requireTeacher(token, db);
         const current = getActivity(db, activityId);
         requirePreparing(current);
+        // 外部讀取期間若已有其他預覽被確認，這份讀取已過時：拒絕，且不得刪除其他有效預覽。
+        if (current.import_revision !== startedRevision) {
+          throw new HttpError(409, 'PREVIEW_STALE', '匯入內容在讀取期間已變更，請重新預覽。');
+        }
         db.prepare('DELETE FROM import_previews WHERE expires_at <= ?').run(new Date(now()).toISOString());
         // 每個活動只保留最新預覽，較舊的預覽自動失效。
         db.prepare('DELETE FROM import_previews WHERE activity_id = ?').run(activityId);

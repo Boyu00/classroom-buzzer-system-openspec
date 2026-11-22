@@ -273,3 +273,37 @@ test('整合：匯入的題目可直接開啟、兩組學生送出（含題組�
   assert.deepEqual(mapping.map((q) => [q.question_id, q.sheet_id, q.row_index, q.column_index]),
     [['1', 1, 1, 0], ['2', 1, 3, 0], ['3', 2, 0, 0], ['4', 2, 4, 2], ['5', 1, 6, 1]]);
 });
+
+test('回歸（review #32）：外部讀取期間已有新匯入被確認，舊讀取回來回 409，不覆蓋新版也不刪除其他有效預覽', async (t) => {
+  const s = await setup(t);
+  // A：讀取很慢，內容是舊版 Q:1；用閘門控制它何時回來。
+  let releaseA;
+  const gateA = new Promise((resolve) => { releaseA = resolve; });
+  const fastRead = s.gateway.readSheets.bind(s.gateway);
+  s.gateway.readSheets = async function readSheets(request) {
+    if (request.sheetIds.length === 1 && request.sheetIds[0] === 3) { await gateA; return [sheet('舊版', 3, [[0, 0, '{{Q:1}}']])]; }
+    return fastRead(request);
+  };
+  const pendingA = s.preview({ spreadsheet: 'book-id', sheetIds: [3] });
+
+  // B：新版 Q:2，預覽並確認，修訂號 0 → 1。
+  s.gateway.sheets = [sheet('新版', 4, [[0, 0, '{{Q:2}}']])];
+  const b = await s.preview({ spreadsheet: 'book-id', sheetIds: [4] });
+  assert.equal(b.status, 200);
+  assert.equal((await s.confirm(b.result.data.previewToken)).status, 200);
+
+  // C：確認 B 之後又產生一份有效預覽（Q:7），A 的舊讀取不得把它刪掉。
+  s.gateway.sheets = [sheet('第三版', 5, [[0, 0, '{{Q:7}}']])];
+  const c = await s.preview({ spreadsheet: 'book-id', sheetIds: [5] });
+  assert.equal(c.status, 200);
+
+  releaseA();
+  const a = await pendingA;
+  assert.deepEqual([a.status, a.result.error.code], [409, 'PREVIEW_STALE']);
+  assert.equal(s.rows('SELECT * FROM import_previews').length, 1, 'C 的有效預覽仍在，A 沒有產生預覽');
+  assert.deepEqual(s.rows('SELECT question_id FROM questions').map((q) => q.question_id), ['2'], 'B 的新匯入沒有被舊讀取覆蓋');
+
+  const confirmed = await s.confirm(c.result.data.previewToken);
+  assert.equal(confirmed.status, 200, 'C 的預覽仍可確認');
+  assert.deepEqual(s.rows('SELECT question_id FROM questions').map((q) => q.question_id), ['7']);
+});
