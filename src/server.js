@@ -3,11 +3,12 @@ import { createApp } from './app.js';
 import { loadConfig } from './config.js';
 import { openStore } from './storage/store.js';
 
-export async function startServer(config = loadConfig()) {
+// sheetsGateway 由 #13 提供真實 Sheets 讀取；測試可注入替身，產品不提供假匯入。
+export async function startServer(config = loadConfig(), { sheetsGateway } = {}) {
   // 即使由其他模組呼叫，也不能改綁到公開介面。
   if (config.host !== '127.0.0.1') throw new Error('服務僅允許綁定 127.0.0.1。');
   const store = openStore(config.databasePath);
-  const app = createApp({ store });
+  const app = createApp({ store, sheetsGateway });
   let server;
   try {
     server = await new Promise((resolve, reject) => {
