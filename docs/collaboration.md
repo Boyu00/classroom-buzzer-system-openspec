@@ -5,7 +5,7 @@
 | 角色 | GitHub 帳號 | Issues | 現況 |
 | --- | --- | --- | --- |
 | member A | a0972776282-tech | #3～#12 | #3 已合併；#4／#5 與 #6 基礎 API 本機實作，#6 整合與 #7～#12 待後續 |
-| member B | Boyu00 | #13～#19 | 未實作 |
+| member B | Boyu00 | #13～#19 | #14 解析器已合併（PR #30）、預覽／確認已完成自動測試；#13 真實 Sheets 與 #15～#19 未實作 |
 | 共同 | 兩人 | #1～#2、#20～#25 | 規劃文件已產生，review／討論／交付未完成 |
 
 ## 既有 issues 與責任
@@ -70,7 +70,7 @@
 | #7／#10、#11 排名核心、#6 有答案結束 | a0972776282-tech | [PR #29](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/29)，已合併 85fe739；核准 head b41e6ae | [Boyu00 正式 Approve](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/29#pullrequestreview-6006195370)，Node 24.22.3、37／37；另有五點不擋合併建議 | docs/submission-results-api.md；tasks 4.1～4.4、5.1～5.3 |
 | B #14 解析器 | Boyu00 | [PR #30](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/30)，核准 head 86d5df8；現已合併為 5db2bc0 並整合本批 | [A 要求修改](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/30#pullrequestreview-6005219096) 原格保留，修正後 [A 正式 Approve](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/30#pullrequestreview-6006190177) | 解析分支 42／42；暫時整合 #29 後 56／56，隔離合併已撤銷；完整匯入仍待後續 |
 | #8／#9 同步與隱私 | a0972776282-tech | [PR #31](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/31)，codex/live-sync-privacy，功能提交 4099452；已合併 b9208d2 | [Boyu00 正式 Approve](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/31#pullrequestreview-6011096228)，核准 cff801f；建議等待教師端兩筆受理再計數，已採納；另外補到期計時器提前觸發的重新排程與測試 | review 修正後全套 76 項、SSE 13 項連跑三次全過；docs/live-sync-api.md；tasks 4.5～4.7 |
-| #12 學生操作頁 | a0972776282-tech | [PR #34](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/34)，codex/student-page；已上傳、未合併 | 已向 Boyu00 正式要求 review，尚未收到結果 | 87／87；兩個 Chrome 工作階段鍵盤操作、隱私、刷新／結束，見 docs/student-page.md |
+| #12 學生操作頁 | a0972776282-tech | [PR #34](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/34)，codex/student-page；已上傳、未合併 | [Boyu00 正式 Approve](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/34#pullrequestreview-6011416078)，核准 f51a6f2；Node 24.22.3，87／87、獨立瀏覽器 17／17；結果頁採用約定路徑 | 87／87；兩個 Chrome 工作階段鍵盤操作、隱私、刷新／結束，見 docs/student-page.md |
 
 每人至少一筆由自己提出且已合併 PR，以及對另一人的實質 review。建立初始規劃 PR 可保留協作紀錄，但不代表功能 issues 已完成。
 
@@ -87,3 +87,5 @@ PR #29 五點建議追蹤：CLOSED 名單欄位需求依結果頁整合再確認
 ## AI 使用與交付（待填）
 
 保留實際 AI 對話、各自負責內容與檢查心得；分享或提交前移除機密。YouTube 影片、表單確認及心得待真實完成後填入，不能以 AI 產生文件取代實際參與。
+
+2026-11-22 PR #34 合併前整合：main 已合併 #32（79f66f6）與 #33（72fbb3a）；解開 package.json／package-lock.json 衝突，同時保留 google-auth-library 11.3.4 與 devDependency linkedom 0.18.12，重裝後 119／119 通過。組員三項非阻擋建議（統一原生空欄位提示、本地時間顯示、顯式處理非 JSON 錯誤）留作後續介面改善，本次不變更已 review 的產品程式。

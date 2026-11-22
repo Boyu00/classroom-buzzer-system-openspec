@@ -2,7 +2,7 @@
 
 以 Google Sheets Guided Notes 為題目來源的課堂搶答系統，支援老師、學生組別、單題／題組、速度／公平模式、線上原格寫回及 CSV。
 
-**目前狀態：骨架、身分活動、受理、題組、排名及 SSE 已經 PR #27～#31 review 合併。本批完成 #12 學生操作頁與自動／瀏覽器驗證；教師頁、共用結果頁、Sheets 串接與完整人工驗收仍待後續整合。**
+**目前狀態：骨架、身分活動、受理、題組、排名及 SSE 已經 PR #27～#31 review 合併。本批完成 #12 學生操作頁與自動／瀏覽器驗證；Sheets 讀取與匯入後端已隨 #32、#33 合併；教師頁、共用結果頁及完整人工驗收仍待後續整合。**
 
 - [完整產品規格](spec.md)：產品需求保留原第一版內容，開發方法改用 OpenSpec。
 - [提案](openspec/changes/build-classroom-buzzer/proposal.md)：目的與能力範圍。
@@ -48,9 +48,26 @@ $env:NODE_USE_SYSTEM_CA = '1'
 npm ci --ignore-scripts
 ```
 
+## Google Sheets 設定（#13）
+
+老師的 Guided Notes 由後端以服務帳戶直接讀取（不經 .xlsx）。金鑰只放在你自己的電腦、repository 外，不得提交、貼到文件或對話。
+
+1. 在 Google Cloud Console 建立專案，啟用 **Google Sheets API**（不需要 Drive API）。建議用個人帳號；部分學校帳號的組織政策禁止建立服務帳戶金鑰。
+2. 建立服務帳戶（不需授予專案角色），在「金鑰」新增 JSON 金鑰並下載，存到 repository 以外的資料夾（例如 `C:/Users/你的帳號/secret/`）。金鑰外洩時請立即在同一頁面刪除。
+3. 把老師的試算表副本「共用」給服務帳戶的 email（格式 `名稱@專案.iam.gserviceaccount.com`）。只讀取需要檢視者；結束後寫回原格需要**編輯者**。教師頁在權限不足時也會顯示該 email。
+4. 在 `.env`（已被 .gitignore 排除）設定金鑰路徑，路徑建議用正斜線：
+
+```
+GOOGLE_APPLICATION_CREDENTIALS=C:/Users/你的帳號/secret/你的服務帳戶金鑰.json
+```
+
+5. 啟動 `npm start`，主控台會顯示「Google Sheets 讀取已啟用」。憑證不存在或無效時服務仍會啟動，只印出不含路徑與內容的警告，匯入回報「尚未設定」。
+
+使用 scope `https://www.googleapis.com/auth/spreadsheets`。單張工作表上限 200,000 格、所選工作表合計 500,000 格；每次 Google 請求逾時 15 秒。API 與錯誤碼見 [docs/import-api.md](docs/import-api.md)。
+
 ## 資料庫與測試
 
-預設資料庫在 `data/classroom.sqlite3`，首次啟動自動建立並執行 migration。可在 `.env` 指定 `DATABASE_PATH`（相對路徑以專案根目錄計）；資料庫、journal 與本機設定不入版控。工作階段與教師密碼雜湊存該本機資料庫；未設定時 session 回應提示初次設定，已設定後必須輸入原密碼。不要把密碼貼到 repository／紀錄；目前不需 Google 金鑰。
+預設資料庫在 `data/classroom.sqlite3`，首次啟動自動建立並執行 migration。可在 `.env` 指定 `DATABASE_PATH`（相對路徑以專案根目錄計）；資料庫、journal 與本機設定不入版控。工作階段與教師密碼雜湊存該本機資料庫；未設定時 session 回應提示初次設定，已設定後必須輸入原密碼。不要把密碼貼到 repository／紀錄；Sheets 匯入需要 Google 服務帳戶金鑰，設定方式見下節。
 
 ```powershell
 npm run db:migrate
@@ -59,7 +76,7 @@ npm test
 
 Migration 可重跑；已套用版本會核對 checksum，不可直接修改舊 SQL。後續變更新增 `002_名稱.sql`，升級前備份本機資料；不要用刪除資料庫解決 migration 錯誤。`.gitattributes` 統一文字換行，checksum 也正規化 CRLF。
 
-測試使用獨立暫存 SQLite 與隨機本機連接埠，不修改你的活動資料。現有 87 項測試涵蓋學生頁 DOM／兩個獨立 Cookie jar 的 HTTP 整合，既有身分／受理／排名、SSE 授權、各通道隱私、他組事件抑制、提交後通知、登出／到期撤銷、斷線／重啟恢復、大快照與前端連線提示。1 師／10 組／20 題的本機同步及一般受理自動情境均低於 2 秒；這些不代表 AC-01～AC-24 的完整人工驗收已通過。詳細結果見 [驗證紀錄](docs/verification.md)。
+測試使用獨立暫存 SQLite 與隨機本機連接埠，不修改你的活動資料。整合 #32、#33 後現有 119 項測試涵蓋學生頁 DOM／兩個獨立 Cookie jar 的 HTTP 整合，既有身分／受理／排名、SSE 授權、各通道隱私、他組事件抑制、提交後通知、登出／到期撤銷、斷線／重啟恢復、大快照與前端連線提示。1 師／10 組／20 題的本機同步及一般受理自動情境均低於 2 秒；這些不代表 AC-01～AC-24 的完整人工驗收已通過。詳細結果見 [驗證紀錄](docs/verification.md)。
 
 資料層使用約定、資料表與後續擴充方式見 [資料層說明](docs/storage.md)。
 

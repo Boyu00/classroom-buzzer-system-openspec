@@ -16,5 +16,7 @@ export function loadConfig(env = process.env) {
     host: '127.0.0.1',
     port: Number(portText),
     databasePath: resolve(projectRoot, env.DATABASE_PATH ?? 'data/classroom.sqlite3'),
+    // 服務帳戶金鑰路徑（repository 外）；未設定時匯入功能回報尚未設定。
+    googleCredentialsPath: env.GOOGLE_APPLICATION_CREDENTIALS?.trim() || null,
   };
 }
