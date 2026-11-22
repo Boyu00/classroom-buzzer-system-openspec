@@ -12,7 +12,7 @@ test('服務僅綁 loopback，提供狀態頁與資料庫健康檢查，不公�
   const url = `http://127.0.0.1:${runtime.server.address().port}`;
   const page = await fetch(url);
   assert.equal(page.status, 200);
-  assert.match(await page.text(), /目前還不能建立或加入活動/);
+  assert.match(await page.text(), /student.html/);
   assert.match(page.headers.get('content-security-policy'), /frame-ancestors 'none'/);
   assert.equal(page.headers.get('x-powered-by'), null);
   const health = await fetch(`${url}/api/health`);

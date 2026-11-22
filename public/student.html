@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>學生搶答 · 課堂搶答系統</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/student.css">
+</head>
+<body>
+  <main>
+    <nav aria-label="頁面導覽"><a href="/">課堂搶答系統</a><span>學生專區</span></nav>
+    <p class="eyebrow">一起思考，一起作答</p>
+    <h1>準備好，換你們回答。</h1>
+    <p class="intro">輸入老師提供的加入碼，與組員一起完成課堂搶答。</p>
+    <p id="connection-status" role="status" aria-live="polite">正在確認工作階段。</p>
+    <p id="page-error" role="alert"></p>
+    <button id="refresh-session" type="button">重新確認身分與活動</button>
+
+    <section id="join-panel" aria-labelledby="join-title" hidden>
+      <h2 id="join-title">加入課堂活動</h2>
+      <form id="join-form">
+        <fieldset id="join-fields" disabled>
+          <legend>你的組別</legend>
+          <label for="join-code">六碼加入碼</label>
+          <input id="join-code" name="joinCode" type="text" required maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="code-help">
+          <p id="code-help" class="hint">請輸入老師提供的 6 碼英數字；英文字母大小寫皆可。</p>
+          <label for="group-name">組別名稱</label>
+          <input id="group-name" name="groupName" type="text" required autocomplete="off" aria-describedby="name-help">
+          <p id="name-help" class="hint">去除前後空白後 1～30 字。同一活動中，組名不能重複。</p>
+          <button type="submit">加入活動</button>
+        </fieldset>
+      </form>
+      <p class="hint">重新整理會恢復原組別。若 Cookie 遺失、工作階段到期或已登出，無法只靠組名恢復，請洽老師。</p>
+    </section>
+
+    <section id="activity-panel" aria-labelledby="activity-title" hidden>
+      <div class="activity-heading"><h2 id="activity-title" tabindex="-1">你的課堂活動</h2><span id="phase" class="badge"></span></div>
+      <p id="group-label"></p>
+      <p id="mode-rule"></p>
+      <p id="phase-help" role="status" aria-live="polite"></p>
+      <button id="refresh-activity" type="button">確認最新活動與受理紀錄</button>
+      <div id="result-panel" hidden>
+        <p id="result-status" role="status">共用結果頁待整合；自己的受理紀錄保留在下方。</p>
+        <a id="result-link" hidden>查看各組結果</a>
+      </div>
+    </section>
+    <div id="units" aria-label="題目與自己的受理紀錄"></div>
+    <p class="hint">每個單位只接受第一筆有效答案；題組須全部填妥後一起送出。未送出的草稿只留在本頁，刷新後不保留。</p>
+    <noscript><p>請啟用 JavaScript，才能加入與作答。</p></noscript>
+  </main>
+  <script type="module" src="/student.js"></script>
+</body>
+</html>
