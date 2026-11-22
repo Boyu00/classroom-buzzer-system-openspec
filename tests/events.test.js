@@ -171,6 +171,7 @@ test('OPEN 學生只收到自己的受理，教師見全部；CLOSED 才推完�
   await a.post(`${f.base}/submissions`, answer('自己的原文\n'));
   const own = await sa.next((frame) => frame.data?.submissions?.length === 1);
   assert.equal(own.data.submissions[0].answers[0].text, '自己的原文\n');
+  await teacher.next((frame) => frame.data?.submissions?.length === 2);
   const beforeRetry = [sa.history.length, sb.history.length, teacher.history.length];
   assert.deepEqual((await b.post(`${f.base}/submissions`, answer('改寫'))).result.data, acceptedB);
   await delay(80);
@@ -252,6 +253,26 @@ test('沒有寫入時，到期的工作階段仍主動結束 SSE，不等待下�
   const student = await openStream(t, f, f.students[0]);
   await student.next();
   await student.next((frame) => frame.event === 'session-ended', 0, 2000);
+  assert.equal((await f.students[0].request(`${f.base}/snapshot`)).status, 401);
+});
+
+test('到期計時器提早觸發時仍重新排程，不等 heartbeat 才撤銷工作階段', async (t) => {
+  const f = await fixture(t);
+  await f.runtime.store.write('global:authentication', (db) => db.prepare('UPDATE sessions SET expires_at = ? WHERE token_hash = ?')
+    .run(new Date(Date.now() + 900).toISOString(), hashToken(readCookie(f.students[0].cookie))));
+  const realSetTimeout = globalThis.setTimeout;
+  let firedEarly = false;
+  t.mock.method(globalThis, 'setTimeout', (callback, ms, ...args) => {
+    if (!firedEarly && ms > 500 && ms <= 900) {
+      firedEarly = true;
+      return realSetTimeout(callback, ms - 100, ...args);
+    }
+    return realSetTimeout(callback, ms, ...args);
+  });
+  const student = await openStream(t, f, f.students[0]);
+  await student.next();
+  await student.next((frame) => frame.event === 'session-ended', 0, 2000);
+  assert.ok(firedEarly, '測試確實提前觸發到期計時器');
   assert.equal((await f.students[0].request(`${f.base}/snapshot`)).status, 401);
 });
 

@@ -94,7 +94,15 @@ export function createEventHttp(store, access, { heartbeatMs = 15000 } = {}) {
     update(initial);
     if (closed) return;
     heartbeat = setInterval(() => client.refresh(true), heartbeatMs);
-    expiry = setTimeout(() => client.refresh(), Math.max(1, Date.parse(session.expires_at) - Date.now()));
+    const checkExpiry = () => {
+      if (closed) return;
+      client.refresh();
+      if (closed) return;
+      // 計時器可能略早觸發；尚未到期時繼續排程，不能等下一次 heartbeat。
+      expiry = setTimeout(checkExpiry, Math.max(1, Date.parse(session.expires_at) - Date.now()));
+      expiry.unref();
+    };
+    expiry = setTimeout(checkExpiry, Math.max(1, Date.parse(session.expires_at) - Date.now()));
     heartbeat.unref();
     expiry.unref();
   });

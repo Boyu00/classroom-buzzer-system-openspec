@@ -56,7 +56,7 @@
 | 模型／API 變更 | 受理與結果見 docs/submission-results-api.md；SSE／重連與 B 匯入接點見 docs/live-sync-api.md；沒有新 migration |
 | 已完成 issues | #3 已經 PR #27 正式 review 並合併；#4／#5 與 #6 基礎 API 已經 PR #28 正式 review 並合併（a78412c） |
 | 已合併的受理／排名 | [PR #29](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/29)，85fe739；Boyu00 核准最新 b41e6ae，37／37 測試通過 |
-| 本批待 review | [PR #31](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/31)，codex/live-sync-privacy：#8 授權 SSE、重連及提示，#9 各通道隱私，tasks 4.5～4.7，整合 main 5db2bc0 後 75／75 通過；已上傳、未合併 |
+| 本批 review | [PR #31](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/31)，codex/live-sync-privacy：#8 授權 SSE、重連及提示，#9 各通道隱私，tasks 4.5～4.7，整合 main 5db2bc0 後 75／75 通過；Boyu00 已正式 Approve，已處理測試競態與到期邊界，76／76 通過；合併狀態見 PR |
 | 未完成／已知問題 | #12 學生頁、B #13～#19 與共同整合／真實 Sheets 驗收未完成；#6 完整頁面人工驗收仍待整合。學生登出／遺失 Cookie 的恢復設計在 #12 前確認 |
 
 ## PR 與 review 證據（待填）
@@ -68,7 +68,7 @@
 | #4／#5、#6 基礎控制 | a0972776282-tech | [PR #28](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/28) 已合併，a78412c；review 時最新提交 d3f5510；#6 保留開啟 | [Boyu00 正式 Approve](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/28#pullrequestreview-5994013087) | 23 項回歸；docs/access-api.md |
 | #7／#10、#11 排名核心、#6 有答案結束 | a0972776282-tech | [PR #29](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/29)，已合併 85fe739；核准 head b41e6ae | [Boyu00 正式 Approve](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/29#pullrequestreview-6006195370)，Node 24.22.3、37／37；另有五點不擋合併建議 | docs/submission-results-api.md；tasks 4.1～4.4、5.1～5.3 |
 | B #14 解析器 | Boyu00 | [PR #30](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/30)，核准 head 86d5df8；現已合併為 5db2bc0 並整合本批 | [A 要求修改](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/30#pullrequestreview-6005219096) 原格保留，修正後 [A 正式 Approve](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/30#pullrequestreview-6006190177) | 解析分支 42／42；暫時整合 #29 後 56／56，隔離合併已撤銷；完整匯入仍待後續 |
-| #8／#9 同步與隱私 | a0972776282-tech | [PR #31](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/31)，codex/live-sync-privacy，功能提交 4099452；已上傳、未合併 | PR 說明已請 Boyu00 review；尚未收到 review | 整合最新 main 後 75 項；docs/live-sync-api.md；tasks 4.5～4.7 |
+| #8／#9 同步與隱私 | a0972776282-tech | [PR #31](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/31)，codex/live-sync-privacy，功能提交 4099452；核准與合併狀態見 PR | [Boyu00 正式 Approve](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/31#pullrequestreview-6011096228)，核准 cff801f；建議等待教師端兩筆受理再計數，已採納；另外補到期計時器提前觸發的重新排程與測試 | review 修正後全套 76 項、SSE 13 項連跑三次全過；docs/live-sync-api.md；tasks 4.5～4.7 |
 
 每人至少一筆由自己提出且已合併 PR，以及對另一人的實質 review。建立初始規劃 PR 可保留協作紀錄，但不代表功能 issues 已完成。
 

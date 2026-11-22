@@ -6,12 +6,14 @@
 - 該命令只驗證規劃格式，不驗證產品功能。
 - member A 骨架、身分活動、受理／題組與排名已經 PR #27～#29 合併。本批完成 SSE、重連及各通道隱私自動測試；完整操作頁與 Sheets 尚未完成。
 - 2026-11-20：依 lockfile 重裝後 11 項基礎自動測試全過，啟動頁及健康檢查回應成功，詳見下表。
-- PR #27、#28、#29 均獲 Boyu00 正式 Approve 並合併，分別為 b5dcda8、a78412c、85fe739；各 review 與測試見 docs/collaboration.md。本批同步／隱私已建立 [PR #31](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/31)，尚待 review、未合併。
+- PR #27、#28、#29 均獲 Boyu00 正式 Approve 並合併，分別為 b5dcda8、a78412c、85fe739；各 review 與測試見 docs/collaboration.md。本批同步／隱私已建立 [PR #31](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/31)，Boyu00 已於 2026-11-22 正式 Approve（review-6011096228）；依 review 修正測試競態，另補到期邊界處理，合併狀態見 PR。
 - 2026-11-20：#4／#5、#6 基礎控制連同既有回歸共 23／23 通過；API 與整合邊界見 docs/access-api.md。
 - 2026-11-20：#7／#10、#11 排名核心與有答案結束連同回歸 37／37 通過；OpenSpec tasks 15／43。SSE、學生頁與完整人工 AC 尚未完成。
 - 2026-11-21：#8／#9、tasks 4.5～4.7 連同回歸 56／56 通過；OpenSpec 18／43。包括真實 HTTP／SSE 與共用前端狀態模組測試，未宣稱完整操作頁人工驗收。
 - 同日上傳前，發現 B 的 PR #30 已合併為 5db2bc0；整合最新 main 後再次執行，75／75 通過（包含解析器 19 項），OpenSpec 仍為 18／43。
 - 真實 Google Sheets 授權、產品人工驗收與 Demo 尚未完成。AC-01～AC-24 的完整人工驗收維持未測，不以後端自動測試代替。
+
+2026-11-22：PR #31 review 修正後，13 項 SSE 測試連跑三次全過；全套 76／76 通過。先等待教師端兩筆受理再比較重送事件數；到期計時器若提前觸發會重新排程，新增提前 100 ms 的回歸情境。OpenSpec strict validation 與 git diff --check 通過；tasks 維持 18／43。
 
 ## 自動驗證紀錄（實作後填寫）
 
@@ -70,7 +72,7 @@
 | --- | --- | --- |
 | DC-01 每人 PR 與實質 review | A 的已合併 PR 與 B 的正式 review 已有；B 的 PR 及 A 的 review 尚待後續 | PR #27 與 review-5992202981 |
 | DC-02 能力文件與實作追溯 | 骨架、身分、受理／排名及 SSE 核心已建立，其餘未完成 | tasks 18／43；docs/storage.md、docs/access-api.md、docs/submission-results-api.md、docs/live-sync-api.md |
-| DC-03 OpenSpec 完整流程 | Propose 完成、Apply 18／43；完整 Verify／Sync／Archive 未完成 | PR #26～#29 已合併；最新同步／隱私批次待 review |
+| DC-03 OpenSpec 完整流程 | Propose 完成、Apply 18／43；完整 Verify／Sync／Archive 未完成 | PR #26～#29 已合併；同步／隱私 PR #31 已正式核准，review 修正後 76／76 通過 |
 | DC-04 與 SpecKit 小組一致性討論 | 待真實討論紀錄 | — |
 | DC-05 AI 對話、文件與產品一致 | 未完成 | — |
 | DC-06 五分鐘內完整 Demo | 未完成 | — |
