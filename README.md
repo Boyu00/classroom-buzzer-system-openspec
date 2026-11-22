@@ -47,6 +47,10 @@ $env:NODE_USE_SYSTEM_CA = '1'
 npm ci --ignore-scripts
 ```
 
+## 結果頁（#16）
+
+活動結束後，老師與已加入該活動的學生用 `/results.html?activityId=<活動 ID>` 查看固定結果（學生頁會在結束後提供連結）。權限、安全設計與驗證方式見 [docs/results-page.md](docs/results-page.md)；`node scripts/e2e-results.mjs` 以真實 Chrome 驗證各種身分（需本機有 Chrome 或 Edge）。
+
 ## 資料庫與測試
 
 預設資料庫在 `data/classroom.sqlite3`，首次啟動自動建立並執行 migration。可在 `.env` 指定 `DATABASE_PATH`（相對路徑以專案根目錄計）；資料庫、journal 與本機設定不入版控。工作階段與教師密碼雜湊存該本機資料庫；未設定時 session 回應提示初次設定，已設定後必須輸入原密碼。不要把密碼貼到 repository／紀錄；目前不需 Google 金鑰。
