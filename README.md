@@ -48,6 +48,10 @@ $env:NODE_USE_SYSTEM_CA = '1'
 npm ci --ignore-scripts
 ```
 
+## 教師控制台（#15）
+
+啟動後開啟 `http://127.0.0.1:3000/teacher.html`：設定密碼／登入、建立活動、匯入題目、開啟、即時監看、結束確認與結果。流程、安全設計與驗證方式見 [docs/teacher-page.md](docs/teacher-page.md)；`npm run e2e:teacher` 以真實 Chrome 走完整流程（Google 以替身取代，需本機有 Chrome 或 Edge）。
+
 ## Google Sheets 設定（#13）
 
 老師的 Guided Notes 由後端以服務帳戶直接讀取（不經 .xlsx）。金鑰只放在你自己的電腦、repository 外，不得提交、貼到文件或對話。
