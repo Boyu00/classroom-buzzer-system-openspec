@@ -53,22 +53,37 @@ function previewView(parsed) {
  * @param gateway #13 的 Sheets gateway：readSheets({ spreadsheet, sheetIds }) → 正規化工作表陣列。
  */
 export function createImportService(store, auth, gateway, { now = Date.now } = {}) {
+  // 外部 API 在 SQLite 交易之外呼叫；失敗不動任何既有匯入，且不洩漏內部錯誤。
+  async function callGateway(operation) {
+    if (!gateway) throw new HttpError(503, 'SHEETS_NOT_CONFIGURED', '尚未設定 Google Sheets 存取。');
+    try {
+      return await operation();
+    } catch (error) {
+      if (error instanceof HttpError) throw error;
+      throw new HttpError(502, 'SHEETS_UNAVAILABLE', '無法讀取 Google Sheets，請確認授權與網路後再試。');
+    }
+  }
+
   return {
+    // 讓教師依序選擇工作表；同時回報服務帳戶 email，提示要把試算表分享給誰。
+    async listSheets(token, activityId, body) {
+      auth.requireTeacher(token);
+      const activity = store.read((db) => getActivity(db, activityId));
+      requirePreparing(activity);
+      const spreadsheet = typeof body?.spreadsheet === 'string' ? body.spreadsheet.trim() : '';
+      if (!spreadsheet || spreadsheet.length > 2048) {
+        throw new HttpError(400, 'INVALID_SPREADSHEET', '請提供 Google Sheets 網址或 ID。');
+      }
+      const listing = await callGateway(() => gateway.listSheets({ spreadsheet }));
+      return { data: { ...listing, serviceAccountEmail: gateway.serviceAccountEmail } };
+    },
+
     async preview(token, activityId, body) {
       auth.requireTeacher(token);
       const request = validateRequest(body);
       const activity = store.read((db) => getActivity(db, activityId));
       requirePreparing(activity);
-      if (!gateway) throw new HttpError(503, 'SHEETS_NOT_CONFIGURED', '尚未設定 Google Sheets 存取。');
-
-      // 外部 API 在 SQLite 交易之外呼叫；失敗不動任何既有匯入。
-      let sheets;
-      try {
-        sheets = await gateway.readSheets(request);
-      } catch (error) {
-        if (error instanceof HttpError) throw error;
-        throw new HttpError(502, 'SHEETS_UNAVAILABLE', '無法讀取 Google Sheets，請確認授權與網路後再試。');
-      }
+      const sheets = await callGateway(() => gateway.readSheets(request));
 
       const parsed = parseSheets(sheets);
       if (!parsed.ok) {
