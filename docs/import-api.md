@@ -8,6 +8,7 @@
 
 | 方法與路徑 | 請求 JSON | 說明 |
 | --- | --- | --- |
+| POST /api/activities/:id/import/sheets | `{ "spreadsheet": "網址或 ID" }` | 列出可選的工作表（`sheetId`、標題、順序）並回報 `serviceAccountEmail`，供教師依序選擇與分享試算表 |
 | POST /api/activities/:id/import/preview | `{ "spreadsheet": "網址或 ID", "sheetIds": [依序選擇的工作表 ID] }` | 讀取、解析並保存預覽；不修改現有題目 |
 | POST /api/activities/:id/import/confirm | `{ "previewToken": "預覽回傳的憑證" }` | 以預覽整批取代舊匯入 |
 
@@ -35,9 +36,15 @@
 | 409 | PREVIEW_INVALID | 憑證不存在、過期、屬於其他 session，或已被較新預覽取代 |
 | 409 | PREVIEW_STALE | 預覽後匯入修訂號已變更 |
 | 409 | INVALID_PHASE | 活動不在 PREPARING |
-| 502／503 | SHEETS_UNAVAILABLE／SHEETS_NOT_CONFIGURED | Sheets 讀取失敗或尚未設定 |
+| 403 | SHEETS_PERMISSION_DENIED | 服務帳戶沒有權限；訊息含應分享的服務帳戶 email |
+| 404 | SPREADSHEET_NOT_FOUND | 找不到試算表 |
+| 400 | SHEET_TOO_LARGE／SHEETS_REQUEST_REJECTED | 工作表範圍過大，或 Google 拒絕請求 |
+| 503 | SHEETS_API_DISABLED／SHEETS_AUTH_FAILED／SHEETS_RATE_LIMITED／SHEETS_NOT_CONFIGURED | 專案未啟用 Sheets API、金鑰授權失敗、超過配額、尚未設定憑證 |
+| 502 | SHEETS_UNAVAILABLE | 斷網、逾時、Google 服務錯誤，或回應格式不正確 |
 
-## Gateway 介面（#13 實作）
+## Gateway（#13）
+
+`src/sheets/gateway.js` 以服務帳戶（`google-auth-library` 的 JWT 用戶端）取得 token，用 `fetch` 呼叫 Sheets API v4：`spreadsheets/{id}` 取得工作表清單（略過圖表等非表格工作表），`spreadsheets/{id}:getByDataFilter` 以 `gridRange.sheetId` 讀取所選工作表的 `formattedValue` 與合併範圍。API 以試算表原順序回傳，gateway 依教師選擇順序重新排序；API 省略的 0 值索引（含 `sheetId: 0`）會補回。錯誤訊息不含 token、金鑰或憑證路徑。
 
 `createApp({ store, sheetsGateway })`、`startServer(config, { sheetsGateway })` 注入 `readSheets({ spreadsheet, sheetIds })`，回傳依選擇順序排列的陣列：
 
