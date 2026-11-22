@@ -71,7 +71,7 @@ export function parseSheets(sheets) {
           return;
         }
         if (inMerge(merges, row, column)) {
-          fail('MERGED_ANSWER_CELL', `答案格不可為合併儲存格：${parsed.marker}`, location);
+          fail('MERGED_ANSWER_CELL', `答案格不可為合併儲存格：${parsed.marker}。請先在試算表副本取消此格的合併（選取該格 → 格式 → 合併儲存格 → 取消合併），再重新預覽。`, location);
           return;
         }
         if (questionSites.has(parsed.questionId)) {
