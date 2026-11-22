@@ -2,7 +2,7 @@
 
 以 Google Sheets Guided Notes 為題目來源的課堂搶答系統，支援老師、學生組別、單題／題組、速度／公平模式、線上原格寫回及 CSV。
 
-**目前狀態：#3～#5 與 #6 基礎 API 已合併。本機新一批完成答案受理、題組原子送出、速度／公平排名及結果與結束狀態同交易保存。教師／學生操作頁、SSE 與 Sheets 串接仍待後續，尚未完成產品驗收。**
+**目前狀態：骨架、身分活動、答案受理、題組與速度／公平排名已經 PR #27～#29 review 合併。本批完成授權 SSE、重連、連線提示及 API／事件隱私自動測試。完整教師／學生操作頁與 Sheets 串接仍待後續，尚未完成產品人工驗收。**
 
 - [完整產品規格](spec.md)：產品需求保留原第一版內容，開發方法改用 OpenSpec。
 - [提案](openspec/changes/build-classroom-buzzer/proposal.md)：目的與能力範圍。
@@ -11,6 +11,7 @@
 - [分工與交接](docs/collaboration.md)、[驗收紀錄](docs/verification.md)。
 - [身分與活動 API](docs/access-api.md)：登入、加入、權限、已確認的規則及 #6 整合邊界。
 - [受理與結果 API](docs/submission-results-api.md)：不可覆寫受理、題組、隱私、排名與 B 共用結果格式。
+- [SSE 與重連 API](docs/live-sync-api.md)：授權推播、提交後通知、隱私、前端共用連線模組與 B 的接點。
 - [第一次上傳 GitHub 教學](docs/github-first-upload.md)。
 
 ## 技術規劃
@@ -74,7 +75,7 @@ npm test
 
 Migration 可重跑；已套用版本會核對 checksum，不可直接修改舊 SQL。後續變更新增 `002_名稱.sql`，升級前備份本機資料；不要用刪除資料庫解決 migration 錯誤。`.gitattributes` 統一文字換行，checksum 也正規化 CRLF。
 
-測試使用獨立暫存 SQLite 與隨機本機連接埠，不修改你的活動資料。現有 37 項測試涵蓋資料層、身分與活動控制、答案驗證、並行去重、題組故障回滾、送出／結束競態、API 隱私、兩種排名與重啟結果保存；它們不代表 AC-01～AC-24 的產品驗收已通過。詳細結果見 [驗證紀錄](docs/verification.md)。
+測試使用獨立暫存 SQLite 與隨機本機連接埠，不修改你的活動資料。現有 75 項測試涵蓋既有身分／受理／排名，以及 SSE 授權、各通道隱私、他組事件抑制、提交後通知、登出／到期撤銷、斷線／重啟恢復、大快照與前端連線提示。1 師／10 組／20 題的本機同步及一般受理自動情境均低於 2 秒；這些不代表 AC-01～AC-24 的完整人工驗收已通過。詳細結果見 [驗證紀錄](docs/verification.md)。
 
 資料層使用約定、資料表與後續擴充方式見 [資料層說明](docs/storage.md)。
 
@@ -104,6 +105,6 @@ openspec validate build-classroom-buzzer --strict
 ## 下一步
 
 1. 本機變更不會自動上傳 GitHub：需依序 commit、push 分支、建立 PR，再由另一人 review 後合併 main。其他人的變更也需 fetch／pull 才會出現在本機。
-2. 分支 `codex/answer-submission` 完成 #7／#10、#11 排名核心與有答案結束，已上傳並建立 [PR #29](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/29)，待組員 review，尚未合併。下一批接 #8 SSE 與 #9 全通道隱私，再做 #12 學生頁；學生 Cookie 遺失／登出後的恢復方式須在 #12 前確認，不能僅靠組名接管。
+2. [PR #29](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/29) 已經 Boyu00 正式 Approve 並合併（85fe739）。本批 `codex/live-sync-privacy` 完成 #8／#9 與 tasks 4.5～4.7，已建立 [PR #31](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/31)，75／75 通過，待組員 review、尚未合併。下一步為 #12 學生頁；學生 Cookie 遺失／登出後的恢復方式須在 #12 前確認，不能僅靠組名接管。
 3. A 測試可用明確標示的 fixture；產品真實 Sheets 匯入由 B 完成，不能用 fixture 宣稱串接完成。
 4. A 交接已驗證模型、API、結果服務與學生頁；B 完成 #13～#19，再共同真實驗收、錄影與繳交。

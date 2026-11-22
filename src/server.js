@@ -17,6 +17,7 @@ export async function startServer(config = loadConfig(), { sheetsGateway } = {})
       listener.once('error', reject);
     });
   } catch (error) {
+    app.locals.closeEvents();
     await store.close();
     throw error;
   }
@@ -28,6 +29,7 @@ export async function startServer(config = loadConfig(), { sheetsGateway } = {})
     store,
     close() {
       closing ??= (async () => {
+        app.locals.closeEvents();
         await new Promise((resolve, reject) => {
           server.close((error) => error ? reject(error) : resolve());
           server.closeIdleConnections();
@@ -45,7 +47,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     const sheetsGateway = openSheetsGateway(config.googleCredentialsPath);
     const runtime = await startServer(config, { sheetsGateway });
     console.log(`課堂搶答系統骨架：http://127.0.0.1:${runtime.server.address().port}`);
-    console.log('教師驗證與活動控制 API 已提供；操作頁面、搶答、推播與 Sheets 功能待後續整合。');
+    console.log('教師驗證、受理、排名與 SSE API 已提供；完整操作頁面與 Sheets 功能待後續整合。');
     console.log(sheetsGateway ? 'Google Sheets 讀取已啟用（服務帳戶）。' : 'Google Sheets 尚未設定，匯入功能暫不可用。');
     const shutdown = () => {
       runtime.close().catch(() => {
