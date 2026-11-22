@@ -34,6 +34,18 @@ test('公式防護：去除前導空白後以 = + - @ 開頭，或有前導 tab�
   for (const input of untouched) assert.equal(neutralizeFormula(input), input, JSON.stringify(input));
 });
 
+test('回歸（review #35）：前導空白「中」含 tab／CR／LF 也要防護，不只第一個字元', () => {
+  // 空白＋控制字元＋普通文字：整段前導空白含 tab／CR／LF，必須加前綴。
+  const guarded = [' \tabc', ' \n中文', '　\r普通', '  \t  普通答案', ' \n文字', ' \r\n 文字', '\t \t文字', ' \t=1', '\n\n普通'];
+  for (const input of guarded) assert.equal(neutralizeFormula(input), `'${input}`, JSON.stringify(input));
+  // 控制字元在文字「中間」不算前導，不得誤加；純空白也不算。
+  const untouched = ['abc\tdef', 'abc\ndef', '普通 \t文字', 'a \t b', '  普通', '　普通', 'abc\r\n=1', '中文\n- 條列'];
+  for (const input of untouched) assert.equal(neutralizeFormula(input), input, JSON.stringify(input));
+  // 原有行為不變。
+  assert.equal(neutralizeFormula('\tabc'), "'\tabc");
+  assert.equal(neutralizeFormula('  =1'), "'  =1");
+});
+
 test('逃脫：逗號、雙引號、CR、LF 加引號並將雙引號加倍；其餘不加', () => {
   assert.equal(escapeField('plain'), 'plain');
   assert.equal(escapeField('a,b'), '"a,b"');

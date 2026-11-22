@@ -4,13 +4,16 @@ export const CSV_COLUMNS = ['activity_id', 'mode', 'unit_id', 'question_id', 'gr
 const BOM = '﻿';
 const EOL = '\r\n';
 
-// 公式注入防護：去除前導空白後以 = + - @ 開頭，或有前導 tab／CR／LF 時，在內容前加單引號。
-// 只改輸出，不改資料庫原值。
+// 公式注入防護：去除前導空白後以 = + - @ 開頭，或前導空白中含 tab／CR／LF 時，在內容前加單引號。
+// 檢查的是「整段前導空白」，不只第一個字元（例如「空白＋tab＋文字」也要防護）；
+// 文字中間才出現的 tab／換行不算前導。只改輸出，不改資料庫原值。
+const LEADING_WHITESPACE = /^\s*/;
+const CONTROL_CHARACTER = /[\t\r\n]/;
 const FORMULA_START = /^[=+\-@]/;
-const LEADING_CONTROL = /^[\t\r\n]/;
 export function neutralizeFormula(value) {
   const text = String(value);
-  return LEADING_CONTROL.test(text) || FORMULA_START.test(text.trimStart()) ? `'${text}` : text;
+  const leading = LEADING_WHITESPACE.exec(text)[0];
+  return CONTROL_CHARACTER.test(leading) || FORMULA_START.test(text.slice(leading.length)) ? `'${text}` : text;
 }
 
 // RFC 4180：含逗號、雙引號、CR 或 LF 的欄位加雙引號，內部雙引號加倍。
