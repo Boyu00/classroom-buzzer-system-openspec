@@ -155,3 +155,20 @@ test('store 共用寫入入口可回滾並持久保存後續資料', async (t) =
     await reopened.close();
   }
 });
+
+test('提交後通知可見完整資料；回滾不通知，通知故障不改變提交結果，取消訂閱生效', async (t) => {
+  const store = openStore(temporaryDatabase(t));
+  const observed = [];
+  const off = store.subscribe((key) => observed.push([key, store.read((db) => db.prepare('SELECT count(*) AS n FROM activities').get().n)]));
+  const offBroken = store.subscribe(() => { throw new Error('test-only listener failure'); });
+  try {
+    await store.write('activity', seedActivity);
+    assert.deepEqual(observed, [['activity', 1]]);
+    await assert.rejects(store.write('activity', () => { throw new Error('rollback'); }), /rollback/);
+    assert.equal(observed.length, 1);
+    off();
+    offBroken();
+    await store.write('activity', () => {});
+    assert.equal(observed.length, 1);
+  } finally { await store.close(); }
+});

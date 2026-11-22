@@ -4,6 +4,7 @@ import { projectRoot } from './config.js';
 import { createAuthHttp } from './auth/http.js';
 import { HttpError } from './http-error.js';
 import { createActivityHttp } from './activities/http.js';
+import { createEventHttp } from './events/http.js';
 import { createImportHttp } from './import/http.js';
 
 export function createApp({ store, sheetsGateway }) {
@@ -22,6 +23,9 @@ export function createApp({ store, sheetsGateway }) {
   app.use('/api', access.guard);
   app.use('/api', access.router);
   app.use('/api', createActivityHttp(store, access));
+  const events = createEventHttp(store, access);
+  app.use('/api', events.router);
+  app.locals.closeEvents = () => events.close();
   app.use('/api', createImportHttp(store, access, sheetsGateway));
 
   app.get('/api/health', (_req, res) => {
