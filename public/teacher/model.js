@@ -83,3 +83,63 @@ export function resultUnits(snapshot) {
     return { unit, rows, noAnswer: rows.length === 0 };
   });
 }
+
+/* ---------- 寫回原 Google Sheets（#17／#18） ---------- */
+export const EXPORT_STATUS_LABEL = {
+  SUCCEEDED: '已寫入並核對', FAILED: '失敗（確認未寫入）', PENDING_VERIFICATION: '待核對（不確定是否已寫入）',
+  CONFLICT: '衝突（已停止）', PENDING: '未執行', WRITING: '寫入中', PREVIEW: '預覽',
+};
+export const PREVIEW_STATUS_LABEL = {
+  WILL_WRITE: '將寫入', ALREADY_WRITTEN: '已寫入（先前已核對）', NO_WINNER: '無人作答，不變更', CONFLICT: '衝突',
+};
+
+function columnLetters(index) {
+  let n = index + 1;
+  let letters = '';
+  while (n > 0) {
+    const rest = (n - 1) % 26;
+    letters = String.fromCharCode(65 + rest) + letters;
+    n = Math.floor((n - 1) / 26);
+  }
+  return letters;
+}
+
+/** 目標格顯示：有工作表名稱（預覽）就用名稱，否則顯示工作表 ID。 */
+export function cellLabel(target) {
+  if (!target) return '';
+  if (target.location) return target.location;
+  return `工作表 ${target.sheetId}！${columnLetters(target.columnIndex)}${target.rowIndex + 1}`;
+}
+
+export function exportCounts(view) {
+  const counts = {};
+  for (const item of view?.items ?? []) counts[item.status] = (counts[item.status] ?? 0) + 1;
+  return counts;
+}
+
+const ADVICE = {
+  SUCCEEDED: null,
+  FAILED: '結果仍保留，Google Sheets 沒有被修改。排除原因（例如分享為「編輯者」、網路）後可重試。',
+  PENDING_VERIFICATION: '無法確認 Google Sheets 是否已寫入。請按「重試寫回」，系統會先回讀線上內容核對，已寫入的不會重複寫入。',
+  CONFLICT: '來源與匯入時不同，已停止且沒有覆寫任何內容。請恢復原內容，或另建活動重新匯入。',
+  WRITING: '寫入進行中，請稍候。',
+};
+const TONE = { SUCCEEDED: 'ok', FAILED: 'bad', PENDING_VERIFICATION: 'warn', CONFLICT: 'bad', WRITING: 'warn' };
+
+/** 一次匯出的整體說明；絕不把部分失敗說成成功。 */
+export function describeExport(view) {
+  if (!view) return null;
+  const counts = exportCounts(view);
+  const total = view.items?.length ?? 0;
+  const done = counts.SUCCEEDED ?? 0;
+  const headline = view.status === 'SUCCEEDED'
+    ? (total ? `全部 ${total} 格已寫入並回讀核對。` : '沒有需要寫入的答案。')
+    : `${done} / ${total} 格已核對成功。`;
+  return { headline, tone: TONE[view.status] ?? 'warn', advice: ADVICE[view.status] ?? null, counts };
+}
+
+/** 可寫回的條件：預覽通過、老師確認暫停編輯，且沒有進行中的操作。 */
+export const canWriteBack = (preview, confirmedPaused) => Boolean(preview?.canWrite && confirmedPaused);
+
+/** 最近一次匯出尚未完成時，按鈕顯示「重試」。 */
+export const writeLabel = (latest) => (latest && latest.status !== 'SUCCEEDED' ? '重試寫回' : '寫回 Google Sheets');

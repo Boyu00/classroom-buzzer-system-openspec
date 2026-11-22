@@ -91,3 +91,16 @@ dialog::backdrop { background: rgba(10, 30, 24, 0.5); }
 .links { display: inline-flex; gap: 16px; flex-wrap: wrap; align-items: center; }
 .links:empty { display: none; }
 a:focus-visible { outline: 3px solid #1b6ec2; outline-offset: 3px; }
+
+/* 寫回原 Google Sheets */
+.export-result { margin-top: 16px; padding: 12px 16px; border-radius: 10px; border: 2px solid #8a948f; background: #f4f6f4; }
+.export-result.ok { border-color: #146149; background: #e6f4ea; }
+.export-result.warn { border-color: #8a5a00; background: #fff4d6; }
+.export-result.bad { border-color: #b3261e; background: #fdecea; }
+.hint.bad { color: #5c1410; font-weight: 600; }
+.badge.status-succeeded { background: #cfe9d6; }
+.badge.status-failed, .badge.status-conflict { background: #f6cfca; }
+.badge.status-pending_verification, .badge.status-writing { background: #ffe7a8; }
+details > summary { cursor: pointer; margin-top: 16px; }
+.wide-cell { width: 55%; }
+.wide-cell .text, td .text { white-space: pre-wrap; overflow-wrap: anywhere; }
