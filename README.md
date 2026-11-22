@@ -2,7 +2,7 @@
 
 以 Google Sheets Guided Notes 為題目來源的課堂搶答系統，支援老師、學生組別、單題／題組、速度／公平模式、線上原格寫回及 CSV。
 
-**目前狀態：骨架、身分活動、答案受理、題組與速度／公平排名已經 PR #27～#29 review 合併。本批完成授權 SSE、重連、連線提示及 API／事件隱私自動測試。完整教師／學生操作頁與 Sheets 串接仍待後續，尚未完成產品人工驗收。**
+**目前狀態：骨架、身分活動、受理、題組、排名及 SSE 已經 PR #27～#31 review 合併。本批完成 #12 學生操作頁與自動／瀏覽器驗證；Sheets 讀取與匯入後端已隨 #32、#33 合併；教師頁、共用結果頁及完整人工驗收仍待後續整合。**
 
 - [完整產品規格](spec.md)：產品需求保留原第一版內容，開發方法改用 OpenSpec。
 - [提案](openspec/changes/build-classroom-buzzer/proposal.md)：目的與能力範圍。
@@ -12,6 +12,7 @@
 - [身分與活動 API](docs/access-api.md)：登入、加入、權限、已確認的規則及 #6 整合邊界。
 - [受理與結果 API](docs/submission-results-api.md)：不可覆寫受理、題組、隱私、排名與 B 共用結果格式。
 - [SSE 與重連 API](docs/live-sync-api.md)：授權推播、提交後通知、隱私、前端共用連線模組與 B 的接點。
+- [學生頁操作與 B 整合接點](docs/student-page.md)。
 - [第一次上傳 GitHub 教學](docs/github-first-upload.md)。
 
 ## 技術規劃
@@ -32,7 +33,7 @@ Copy-Item .env.example .env
 npm start
 ```
 
-`Copy-Item` 只在第一次尚無 `.env` 時執行，已有設定時保留原檔。啟動後開啟 [本機頁面](http://127.0.0.1:3000)，應看到「活動管理基礎已就緒，操作頁面準備中」。目前操作需透過 API，該狀態頁沒有登入／加入表單。[健康檢查](http://127.0.0.1:3000/api/health) 應回傳：
+`Copy-Item` 只在第一次尚無 `.env` 時執行，已有設定時保留原檔。啟動後開啟 [本機頁面](http://127.0.0.1:3000)，可從首頁進入[學生搶答頁](http://127.0.0.1:3000/student.html)，以老師提供的加入碼及組名加入。教師控制與真實匯入仍待 B 整合，詳細流程見[學生頁教學](docs/student-page.md)。[健康檢查](http://127.0.0.1:3000/api/health) 應回傳：
 
 ```json
 {"data":{"status":"ok","stage":"foundation","database":"ok"}}
@@ -75,7 +76,7 @@ npm test
 
 Migration 可重跑；已套用版本會核對 checksum，不可直接修改舊 SQL。後續變更新增 `002_名稱.sql`，升級前備份本機資料；不要用刪除資料庫解決 migration 錯誤。`.gitattributes` 統一文字換行，checksum 也正規化 CRLF。
 
-測試使用獨立暫存 SQLite 與隨機本機連接埠，不修改你的活動資料。現有 75 項測試涵蓋既有身分／受理／排名，以及 SSE 授權、各通道隱私、他組事件抑制、提交後通知、登出／到期撤銷、斷線／重啟恢復、大快照與前端連線提示。1 師／10 組／20 題的本機同步及一般受理自動情境均低於 2 秒；這些不代表 AC-01～AC-24 的完整人工驗收已通過。詳細結果見 [驗證紀錄](docs/verification.md)。
+測試使用獨立暫存 SQLite 與隨機本機連接埠，不修改你的活動資料。整合 #32、#33 後現有 119 項測試涵蓋學生頁 DOM／兩個獨立 Cookie jar 的 HTTP 整合，既有身分／受理／排名、SSE 授權、各通道隱私、他組事件抑制、提交後通知、登出／到期撤銷、斷線／重啟恢復、大快照與前端連線提示。1 師／10 組／20 題的本機同步及一般受理自動情境均低於 2 秒；這些不代表 AC-01～AC-24 的完整人工驗收已通過。詳細結果見 [驗證紀錄](docs/verification.md)。
 
 資料層使用約定、資料表與後續擴充方式見 [資料層說明](docs/storage.md)。
 
@@ -105,6 +106,6 @@ openspec validate build-classroom-buzzer --strict
 ## 下一步
 
 1. 本機變更不會自動上傳 GitHub：需依序 commit、push 分支、建立 PR，再由另一人 review 後合併 main。其他人的變更也需 fetch／pull 才會出現在本機。
-2. [PR #29](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/29) 已經 Boyu00 正式 Approve 並合併（85fe739）。本批 `codex/live-sync-privacy` 完成 #8／#9 與 tasks 4.5～4.7，已建立 [PR #31](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/31)，75／75 通過，待組員 review、尚未合併。下一步為 #12 學生頁；學生 Cookie 遺失／登出後的恢復方式須在 #12 前確認，不能僅靠組名接管。
+2. [PR #29](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/29) 與 [PR #31](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/31) 均已由 Boyu00 正式 Approve 並合併（85fe739、b9208d2）。本批 `codex/student-page` 完成 #12 與 tasks 5.4～5.6；87／87 通過。使用者確認刷新／重連以原 Cookie 恢復，遺失、到期或登出後不以組名接管。
 3. A 測試可用明確標示的 fixture；產品真實 Sheets 匯入由 B 完成，不能用 fixture 宣稱串接完成。
 4. A 交接已驗證模型、API、結果服務與學生頁；B 完成 #13～#19，再共同真實驗收、錄影與繳交。

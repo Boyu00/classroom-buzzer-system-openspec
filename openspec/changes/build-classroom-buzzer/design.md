@@ -104,3 +104,8 @@ CSV 從已保存結果產生，每題展開、固定欄位、UTC 時間、BOM、
 ## Migration Plan
 
 本次是文件初始建置，沒有既有使用者資料可遷移。#3 建立可版本化 schema 與本機設定；後續 schema 修改由 migration 管理，升級前備份本機資料。功能與規劃以 branch／PR 合併，失敗保留原資料並修正 PR；有資料後不得靠刪除資料庫迴避驗收。整體驗證完成後才 sync 主規格及 archive change。
+
+
+### 2026-11-22 學生頁實作與恢復確認
+
+使用者確認沿用原 Cookie 恢復，不提供遺失／到期／登出後僅以組名接管。#12 入口為 /student.html，使用既有 API、SSE 與 CSRF 旋轉；本頁不追蹤草稿、不自動登出或延長身分。B #16 共用結果頁接點暫定 /results.html?activityId=...；只有 CLOSED 且頁面存在才提供連結，未整合明示。詳細操作、待整合範圍及測試見 docs/student-page.md。

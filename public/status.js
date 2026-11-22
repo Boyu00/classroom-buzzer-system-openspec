@@ -11,7 +11,7 @@ try {
       },
     });
     window.addEventListener('pagehide', () => stream.close(), { once: true });
-  } else status.textContent = '尚未加入活動。完整操作頁面仍在準備中。';
+  } else status.textContent = '學生可前往搶答頁，使用加入碼與組名加入活動。';
 } catch {
   status.textContent = '無法連線服務，請確認服務啟動後重新整理。';
 }
