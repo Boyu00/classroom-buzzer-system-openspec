@@ -3,11 +3,11 @@ import { temporaryDatabase } from './helpers.js';
 
 export const testPassword = 'test-only-secret-密碼';
 
-export async function httpFixture(t) {
+export async function httpFixture(t, options) {
   let runtime;
   t.after(() => runtime?.close());
   const filename = temporaryDatabase(t);
-  runtime = await startServer({ host: '127.0.0.1', port: 0, databasePath: filename });
+  runtime = await startServer({ host: '127.0.0.1', port: 0, databasePath: filename }, options);
   return { runtime, filename, url: `http://127.0.0.1:${runtime.server.address().port}` };
 }
 
