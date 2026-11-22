@@ -25,7 +25,8 @@ function inMerge(merges, row, column) {
     && (m.endRow - m.startRow) * (m.endCol - m.startCol) > 1);
 }
 
-function fingerprint(sheets, scanned) {
+// 匯出寫回時以相同規則重算結構指紋（題目座標取自資料庫、其餘取自線上現況）。
+export function fingerprint(sheets, scanned) {
   const canonical = {
     sheets: sheets.map((s) => ({
       spreadsheetId: s.spreadsheetId, sheetId: s.sheetId, title: s.title,
