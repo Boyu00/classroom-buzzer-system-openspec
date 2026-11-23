@@ -48,6 +48,10 @@ $env:NODE_USE_SYSTEM_CA = '1'
 npm ci --ignore-scripts
 ```
 
+## 結果頁（#16）
+
+活動結束後，老師與已加入該活動的學生用 `/results.html?activityId=<活動 ID>` 查看固定結果（學生頁會在結束後提供連結）。權限、安全設計與驗證方式見 [docs/results-page.md](docs/results-page.md)；`node scripts/e2e-results.mjs` 以真實 Chrome 驗證各種身分（需本機有 Chrome 或 Edge）。
+
 ## Google Sheets 設定（#13）
 
 老師的 Guided Notes 由後端以服務帳戶直接讀取（不經 .xlsx）。金鑰只放在你自己的電腦、repository 外，不得提交、貼到文件或對話。
