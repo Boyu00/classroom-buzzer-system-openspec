@@ -107,3 +107,20 @@ Boyu00 正式 Approve：review-6011416078，對應 head f51a6f2；組員記錄 N
 - Google Sheets 是記憶體替身，不代表 AC-01／AC-03；老師頁與學生頁的畫面不在此測試範圍（有各自的瀏覽器 E2E）。
 - 10 組、150 筆受理屬課堂規模；沒有做更大的壓力測試。
 - tasks 9.1 還有「確認各功能都已隨實作提交測試」：#36（結果頁）、#37（教師頁）、#38（寫回）合併後需再跑一次全回歸並更新這裡，所以 9.1 先不勾選。
+
+## Node 24.22.3 全分支重測（2026-11-23）
+
+環境：Windows，conda 環境 `node24` 的 Node v24.22.3（符合 `engines` >=24.22.0 <25）、npm 11.19.1。先前多數結果是在預設 PATH 的 Node v26.13.1 取得，這裡全部以符合版本重跑。
+
+| 分支 | `npm test` | 瀏覽器 E2E（真實 Chrome） |
+| --- | --- | --- |
+| test/integration-10x20（main＋#20） | 132／132 | — |
+| feat/results-page（#36） | 137／137 | `e2e-results` 20／20 |
+| feat/teacher-console（#37） | 151／151 | `e2e-teacher` 39／39 |
+| feat/sheets-writeback（#38） | 154／154 | — |
+| feat/export-ui（#18 教師頁面板，未開 PR） | 157／157 | `e2e-teacher` 48／48 |
+| playtest（所有功能合併，僅本機試玩） | 175／175 | `e2e-teacher` 50／50、`e2e-results` 20／20 |
+
+**真實 Google Sheets**（feat/sheets-writeback，兩份測試副本，同樣在 Node 24.22.3）：單題表 25／25、題組表 22／22 通過，內容與 2026-11-22 的結果一致（RAW 純文字、其他內容與格式不變、重複寫回識別、改寫原格 → 409 停止）。驗收腳本不在 repository；跑完已還原測試副本的標記。
+
+限制：E2E 的 Sheets 仍是記憶體替身（真實 Sheets 只有上面那項後端流程驗收）；未涵蓋手機版面、螢幕閱讀器與其他瀏覽器。
