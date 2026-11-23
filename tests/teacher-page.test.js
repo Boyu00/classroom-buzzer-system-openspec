@@ -176,3 +176,17 @@ test('伺服器提供教師頁與模組，帶嚴格 CSP；首頁有教師入口'
   assert.equal((await fetch(`${f.url}/teacher.css`)).status, 200);
   assert.match(await (await fetch(`${f.url}/`)).text(), /href="\/teacher\.html"/);
 });
+
+test('isStaleSnapshot：同一活動階段只前進；較舊階段的快照視為過期，不同活動或首次快照一律接受', () => {
+  const snap = (activityId, state) => ({ activityId, state });
+  assert.equal(model.isStaleSnapshot(snap('a', 'CLOSED'), snap('a', 'OPEN')), true, 'CLOSED 後到的 OPEN');
+  assert.equal(model.isStaleSnapshot(snap('a', 'CLOSED'), snap('a', 'PREPARING')), true);
+  assert.equal(model.isStaleSnapshot(snap('a', 'OPEN'), snap('a', 'PREPARING')), true);
+  assert.equal(model.isStaleSnapshot(snap('a', 'OPEN'), snap('a', 'OPEN')), false, '同階段（內容更新）要接受');
+  assert.equal(model.isStaleSnapshot(snap('a', 'OPEN'), snap('a', 'CLOSED')), false);
+  assert.equal(model.isStaleSnapshot(snap('a', 'PREPARING'), snap('a', 'OPEN')), false);
+  assert.equal(model.isStaleSnapshot(snap('a', 'CLOSED'), snap('b', 'PREPARING')), false, '不同活動由世代檢查處理');
+  assert.equal(model.isStaleSnapshot(null, snap('a', 'OPEN')), false);
+  assert.equal(model.isStaleSnapshot(snap('a', 'OPEN'), null), false);
+  assert.equal(model.isStaleSnapshot(snap('a', 'OPEN'), snap('a', 'UNKNOWN')), true, '未知階段不可覆蓋已知階段');
+});

@@ -12,6 +12,10 @@ const api = createApi();
 let stream = null;
 let snapshot = null;
 let activityId = null;
+// 世代：切換活動、登出或重新登入都會遞增；舊世代的非同步回應一律丟棄，避免蓋掉目前畫面。
+let epoch = 0;
+// 目前世代已收到的 SSE 快照數；HTTP 請求期間若數字變了，代表已有較新的即時快照。
+let streamSeq = 0;
 let refs = {};
 const importState = { spreadsheet: '', sheets: [], selected: [], email: '', title: '', preview: null };
 
@@ -58,6 +62,7 @@ const button = (label, attrs = {}, onclick) => el('button', { type: 'button', ..
 
 /* ---------- 啟動與畫面切換 ---------- */
 function detach() {
+  epoch += 1;
   stream?.close();
   stream = null;
   snapshot = null;
@@ -152,13 +157,20 @@ async function dashboard() {
 }
 
 function attach(id) {
+  epoch += 1;
+  const mine = epoch;
   stream?.close();
   activityId = id;
   snapshot = null;
+  streamSeq = 0;
   stream = watchActivity({
     activityId: id,
     statusElement: refs.status,
-    onSnapshot: applySnapshot,
+    onSnapshot: (next) => {
+      if (mine !== epoch) return; // 已切換活動或登出的舊連線
+      streamSeq += 1;
+      applySnapshot(next);
+    },
     onConnection: (state) => {
       if (state === 'unauthorized') { showAlert({ message: '工作階段已失效，請重新登入。' }); start(); }
     },
@@ -167,13 +179,22 @@ function attach(id) {
 window.addEventListener('pagehide', () => stream?.close(), { once: true });
 
 function applySnapshot(next) {
+  // 同一活動的階段只會前進；較舊的快照（例如延遲抵達的 OPEN）不能把已結束的畫面蓋回去。
+  if (model.isStaleSnapshot(snapshot, next)) return;
   snapshot = next;
   renderAll();
 }
 
 // SSE 之外的保險：操作成功後主動抓一次最新快照，避免連線暫時中斷時畫面停在舊狀態。
 async function refresh() {
-  if (activityId) applySnapshot(await api.get(`/api/activities/${encodeURIComponent(activityId)}/snapshot`));
+  if (!activityId) return;
+  const id = activityId;
+  const mine = epoch;
+  const seq = streamSeq;
+  const next = await api.get(`/api/activities/${encodeURIComponent(id)}/snapshot`);
+  if (mine !== epoch || id !== activityId) return; // 回應抵達前已切換活動、登出或重新登入
+  if (seq !== streamSeq) return; // 請求期間 SSE 已送來較新的快照，這份 HTTP 回應可能較舊
+  applySnapshot(next);
 }
 
 function renderAll() {
