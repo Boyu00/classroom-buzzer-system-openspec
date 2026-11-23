@@ -1,0 +1,45 @@
+/* 結果頁樣式；沿用 style.css 的色彩。不使用內嵌樣式（CSP 僅允許同源樣式表）。 */
+main.wide { max-width: 1080px; padding: 28px 20px 64px; }
+.skip { position: absolute; left: -999px; top: 8px; background: #fff; padding: 8px 12px; border-radius: 8px; z-index: 10; }
+.skip:focus { left: 8px; outline: 3px solid #146149; }
+.page-header h1 { margin: 6px 0 0; font-size: clamp(1.6rem, 4vw, 2.2rem); }
+.page-header .eyebrow { margin: 0; }
+#content:focus { outline: none; }
+.connection { margin: 12px 0 0; font-size: 0.92rem; color: #45645c; }
+.connection:empty { display: none; }
+[hidden] { display: none !important; }
+
+.summary-box, .notice, #content > .unit { margin-top: 22px; }
+.summary-box, .notice { padding: 22px; background: #fff; border: 1px solid #dce4da; border-radius: 16px; }
+#content > .unit { padding: 18px 22px; background: #fff; border: 1px solid #dce4da; border-radius: 16px; }
+h2 { margin: 0 0 10px; font-size: 1.25rem; }
+h3 { margin: 0 0 6px; font-size: 1.05rem; }
+.hint { color: #45645c; font-size: 0.92rem; line-height: 1.6; }
+.links { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; margin: 12px 0 0; }
+a:focus-visible { outline: 3px solid #1b6ec2; outline-offset: 3px; }
+
+.notice.forbidden, .notice.error, .notice.notfound { border-color: #b3261e; }
+.notice.waiting, .notice.identity { border-color: #146149; }
+
+.winner-line { margin: 4px 0; font-weight: 600; }
+.no-answer { margin: 4px 0; font-weight: 600; color: #52615a; }
+table { width: 100%; border-collapse: collapse; margin: 8px 0; table-layout: fixed; }
+caption { text-align: left; font-weight: 600; padding: 4px 0; color: #45645c; }
+th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid #e3eae2; }
+thead th { background: #f1f6ef; font-size: 0.92rem; }
+th:first-child, td:first-child { width: 4.5em; }
+td:nth-child(3) { width: 6em; }
+th:nth-child(2) { width: 11em; }
+tr.winner { background: #eef7ee; }
+tr.own { box-shadow: inset 4px 0 0 #1b6ec2; }
+.badge { margin-left: 8px; }
+.own-badge { background: #dbe9f9; }
+.answers { list-style: none; margin: 0; padding: 0; }
+.answers li { display: flex; gap: 10px; padding: 2px 0; }
+.qid { flex: none; color: #146149; font-weight: 600; }
+.text { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+@media (max-width: 640px) {
+  th, td { padding: 6px; }
+  th:nth-child(2) { width: 7em; }
+}

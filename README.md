@@ -48,6 +48,14 @@ $env:NODE_USE_SYSTEM_CA = '1'
 npm ci --ignore-scripts
 ```
 
+## 教師控制台（#15）
+
+啟動後開啟 `http://127.0.0.1:3000/teacher.html`：設定密碼／登入、建立活動、匯入題目、開啟、即時監看、結束確認與結果。流程、安全設計與驗證方式見 [docs/teacher-page.md](docs/teacher-page.md)；`npm run e2e:teacher` 以真實 Chrome 走完整流程（Google 以替身取代，需本機有 Chrome 或 Edge）。
+
+## 結果頁（#16）
+
+活動結束後，老師與已加入該活動的學生用 `/results.html?activityId=<活動 ID>` 查看固定結果（學生頁會在結束後提供連結）。權限、安全設計與驗證方式見 [docs/results-page.md](docs/results-page.md)；`node scripts/e2e-results.mjs` 以真實 Chrome 驗證各種身分（需本機有 Chrome 或 Edge）。
+
 ## Google Sheets 設定（#13）
 
 老師的 Guided Notes 由後端以服務帳戶直接讀取（不經 .xlsx）。金鑰只放在你自己的電腦、repository 外，不得提交、貼到文件或對話。
@@ -64,6 +72,17 @@ GOOGLE_APPLICATION_CREDENTIALS=C:/Users/你的帳號/secret/你的服務帳戶�
 5. 啟動 `npm start`，主控台會顯示「Google Sheets 讀取已啟用」。憑證不存在或無效時服務仍會啟動，只印出不含路徑與內容的警告，匯入回報「尚未設定」。
 
 使用 scope `https://www.googleapis.com/auth/spreadsheets`。單張工作表上限 200,000 格、所選工作表合計 500,000 格；每次 Google 請求逾時 15 秒。API 與錯誤碼見 [docs/import-api.md](docs/import-api.md)。
+
+### 整理課程範本（加標記）
+
+不要直接改原始範本：先**複製一份**（檔案 → 建立副本），再在副本上整理，並把副本共用給服務帳戶（編輯者）。
+
+1. 在每一題的作答格填入標記：單題 `{{Q:1}}`；題組 `{{Q:2a|G:2}}`、`{{Q:2b|G:2}}`（同一個 `G:` 代號為同一題組，至少兩題）。題號在整份匯入範圍內不可重複，題號與代號限英數字、點、底線、連字號。
+2. **作答格不可是合併儲存格**。課程範本的作答欄常是 G:H 合併，請先選取該格 → 格式 → 合併儲存格 → 取消合併，再填入標記；否則匯入預覽會指出是哪一格並拒絕。
+3. 其他文字、格式不必改；寫回時只會替換作答格的內容。
+4. 標記必須是整格唯一內容（前後空白會被忽略）。
+
+寫回結束後，作答格的標記會被勝出答案取代，所以要重做時請再貼回標記，或另外複製一份範本。
 
 ## 資料庫與測試
 
