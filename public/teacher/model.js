@@ -143,3 +143,15 @@ export const canWriteBack = (preview, confirmedPaused) => Boolean(preview?.canWr
 
 /** 最近一次匯出尚未完成時，按鈕顯示「重試」。 */
 export const writeLabel = (latest) => (latest && latest.status !== 'SUCCEEDED' ? '重試寫回' : '寫回 Google Sheets');
+
+/* ---------- 快照順序 ---------- */
+const PHASE_RANK = { PREPARING: 0, OPEN: 1, CLOSED: 2 };
+
+/**
+ * 同一活動內階段只會前進。收到較舊階段的快照（例如已經看到 CLOSED 之後才抵達的 OPEN）要丟棄；
+ * 不同活動或尚無快照時一律接受（切換活動由呼叫端的世代檢查處理）。
+ */
+export function isStaleSnapshot(current, next) {
+  if (!current || !next || current.activityId !== next.activityId) return false;
+  return (PHASE_RANK[next.state] ?? -1) < (PHASE_RANK[current.state] ?? -1);
+}

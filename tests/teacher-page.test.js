@@ -4,6 +4,7 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as model from '../public/teacher/model.js';
+import { createSnapshotGate } from '../public/teacher/snapshot-gate.js';
 import { createApi, ApiError } from '../public/teacher/api.js';
 import { httpFixture } from './http-helpers.js';
 
@@ -217,4 +218,89 @@ test('寫回：按鈕條件需預覽通過且老師確認；未完成的上次�
   for (const status of ['FAILED', 'PENDING_VERIFICATION', 'CONFLICT']) assert.equal(model.writeLabel({ status }), '重試寫回', status);
   for (const key of ['SUCCEEDED', 'FAILED', 'PENDING_VERIFICATION', 'CONFLICT', 'PENDING']) assert.ok(model.EXPORT_STATUS_LABEL[key], key);
   for (const key of ['WILL_WRITE', 'ALREADY_WRITTEN', 'NO_WINNER', 'CONFLICT']) assert.ok(model.PREVIEW_STATUS_LABEL[key], key);
+
+test('isStaleSnapshot：同一活動階段只前進；較舊階段的快照視為過期，不同活動或首次快照一律接受', () => {
+  const snap = (activityId, state) => ({ activityId, state });
+  assert.equal(model.isStaleSnapshot(snap('a', 'CLOSED'), snap('a', 'OPEN')), true, 'CLOSED 後到的 OPEN');
+  assert.equal(model.isStaleSnapshot(snap('a', 'CLOSED'), snap('a', 'PREPARING')), true);
+  assert.equal(model.isStaleSnapshot(snap('a', 'OPEN'), snap('a', 'PREPARING')), true);
+  assert.equal(model.isStaleSnapshot(snap('a', 'OPEN'), snap('a', 'OPEN')), false, '同階段（內容更新）要接受');
+  assert.equal(model.isStaleSnapshot(snap('a', 'OPEN'), snap('a', 'CLOSED')), false);
+  assert.equal(model.isStaleSnapshot(snap('a', 'PREPARING'), snap('a', 'OPEN')), false);
+  assert.equal(model.isStaleSnapshot(snap('a', 'CLOSED'), snap('b', 'PREPARING')), false, '不同活動由世代檢查處理');
+  assert.equal(model.isStaleSnapshot(null, snap('a', 'OPEN')), false);
+  assert.equal(model.isStaleSnapshot(snap('a', 'OPEN'), null), false);
+  assert.equal(model.isStaleSnapshot(snap('a', 'OPEN'), snap('a', 'UNKNOWN')), true, '未知階段不可覆蓋已知階段');
+});
+
+/* ---------- 快照閘門（review #37）：固定的回應順序測試，不需要瀏覽器 ---------- */
+const snap = (activityId, state, extra = {}) => ({ activityId, state, ...extra });
+
+test('閘門：CLOSED 的 SSE 先到、舊 OPEN 的 HTTP 後到，不能退回 OPEN', () => {
+  const gate = createSnapshotGate();
+  const token = gate.attach('a');
+  assert.equal(gate.pushed(token, snap('a', 'PREPARING')), true);
+  const ticket = gate.beginFetch(); // 開啟後主動抓快照
+  assert.equal(gate.pushed(token, snap('a', 'CLOSED')), true);
+  assert.equal(gate.fetched(ticket, snap('a', 'OPEN')), false, '請求期間 SSE 已送來較新快照');
+  assert.equal(gate.snapshot.state, 'CLOSED');
+});
+
+test('閘門：沒有 SSE 時 HTTP 快照照常接受（SSE 中斷時的保險仍有效）', () => {
+  const gate = createSnapshotGate();
+  gate.attach('a');
+  const ticket = gate.beginFetch();
+  assert.equal(gate.fetched(ticket, snap('a', 'OPEN')), true);
+  assert.equal(gate.snapshot.state, 'OPEN');
+});
+
+test('閘門：階段只前進；較舊階段的 HTTP 與 SSE 快照都被擋下，同階段內容更新照常接受', () => {
+  const gate = createSnapshotGate();
+  const token = gate.attach('a');
+  gate.pushed(token, snap('a', 'CLOSED', { v: 1 }));
+  assert.equal(gate.pushed(token, snap('a', 'OPEN')), false, 'SSE 也不能倒退');
+  assert.equal(gate.fetched(gate.beginFetch(), snap('a', 'OPEN')), false);
+  assert.equal(gate.pushed(token, snap('a', 'CLOSED', { v: 2 })), true);
+  assert.equal(gate.snapshot.v, 2);
+});
+
+test('閘門：切換活動後，舊活動的 HTTP 與 SSE 回應一律丟棄', () => {
+  const gate = createSnapshotGate();
+  const oldToken = gate.attach('a');
+  gate.pushed(oldToken, snap('a', 'OPEN'));
+  const oldTicket = gate.beginFetch();
+  const newToken = gate.attach('b');
+  assert.equal(gate.fetched(oldTicket, snap('a', 'OPEN')), false, '舊活動的 HTTP 回應');
+  assert.equal(gate.pushed(oldToken, snap('a', 'CLOSED')), false, '舊連線的 SSE 回呼');
+  assert.equal(gate.snapshot, null, '新活動尚未收到任何快照，不能殘留舊資料');
+  assert.equal(gate.pushed(newToken, snap('b', 'PREPARING')), true);
+  assert.equal(gate.activityId, 'b');
+});
+
+test('閘門：登出後舊回應不恢復快照；重新登入同一活動也不接受登出前的請求', () => {
+  const gate = createSnapshotGate();
+  const token = gate.attach('a');
+  gate.pushed(token, snap('a', 'OPEN'));
+  const ticket = gate.beginFetch();
+  gate.detach();
+  assert.equal(gate.snapshot, null);
+  assert.equal(gate.activityId, null);
+  assert.equal(gate.fetched(ticket, snap('a', 'OPEN')), false, '登出後的 HTTP 回應');
+  assert.equal(gate.pushed(token, snap('a', 'OPEN')), false, '登出後的 SSE 回呼');
+  assert.equal(gate.beginFetch(), null, '沒有監看中的活動就不送請求');
+
+  const second = gate.attach('a'); // 重新登入後再次監看同一個活動
+  assert.equal(gate.fetched(ticket, snap('a', 'CLOSED')), false, '登出前送出的請求仍屬舊世代');
+  assert.equal(gate.pushed(token, snap('a', 'CLOSED')), false);
+  assert.equal(gate.pushed(second, snap('a', 'OPEN')), true);
+});
+
+test('閘門：同階段較新的 SSE 內容不會被延遲抵達的 HTTP 回應蓋回', () => {
+  const gate = createSnapshotGate();
+  const token = gate.attach('a');
+  gate.pushed(token, snap('a', 'OPEN', { groups: 1 }));
+  const ticket = gate.beginFetch();
+  gate.pushed(token, snap('a', 'OPEN', { groups: 3 }));
+  assert.equal(gate.fetched(ticket, snap('a', 'OPEN', { groups: 2 })), false);
+  assert.equal(gate.snapshot.groups, 3);
 });

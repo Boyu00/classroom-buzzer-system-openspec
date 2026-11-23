@@ -78,8 +78,10 @@ async function main() {
   let nextId = 0;
   const pending = new Map();
   const browserLog = [];
+  const heldRequests = [];
   socket.onmessage = (event) => {
     const message = JSON.parse(event.data);
+    if (message.method === 'Fetch.requestPaused') heldRequests.push(message.params.requestId);
     if (message.method === "Runtime.exceptionThrown") browserLog.push(`例外：${message.params.exceptionDetails.exception?.description ?? message.params.exceptionDetails.text}`);
     if (message.method === "Runtime.consoleAPICalled") browserLog.push(`console.${message.params.type}：${message.params.args.map((a) => a.value ?? a.description).join(" ")}`);
     if (message.method === "Log.entryAdded") browserLog.push(`${message.params.entry.level}：${message.params.entry.text} ${message.params.entry.url ?? ""}`);
@@ -324,6 +326,73 @@ async function main() {
   await click('form button[type=submit]');
   await waitFor("document.querySelector('.facts')?.innerText.includes('已結束')", '登入後找回已結束活動');
   check('重新登入後找回最近一場活動結果', true);
+
+  // ===== #37 review：舊 HTTP 快照不得蓋掉較新的 SSE 狀態，也不得在切換活動後更新畫面 =====
+  // 以頁面內的 fetch 閘門讓「/snapshot」回應延遲抵達，重現 A 指出的回應順序。
+  const other = await httpClient(base);
+  await other.refresh();
+  if ((await other.post('/api/teacher/login', { password: PASSWORD })).status !== 200) throw new Error('第二個教師工作階段登入失敗');
+  const seedQuestions = (id) => runtime.store.write(id, (db) => {
+    db.prepare("INSERT INTO units VALUES (?, 'race-unit', 'SINGLE', 0)").run(id);
+    db.prepare("INSERT INTO questions VALUES (?, 'race-unit', '1', 0, 'race-sheet', 0, 0, 0, '{{Q:1}}', 'race')").run(id);
+  });
+  const installGate = () => { heldRequests.length = 0; return send('Fetch.enable', { patterns: [{ urlPattern: '*/snapshot', requestStage: 'Response' }] }); };
+  const waitHeld = async (count, label) => {
+    const started = Date.now();
+    while (heldRequests.length < count) {
+      if (Date.now() - started > 6000) throw new Error(`逾時未攔到請求：${label}`);
+      await new Promise((r) => setTimeout(r, 40));
+    }
+  };
+  const releaseHeld = async () => {
+    for (const requestId of heldRequests.splice(0)) await send('Fetch.continueResponse', { requestId });
+    await send('Fetch.disable');
+  };
+  const currentActivityId = () => evaluate("fetch('/api/teacher/activity').then((r) => r.json()).then((j) => j.data.activity.activityId)");
+  const newActivity = async () => {
+    const previous = await text('.code');
+    await clickByText('建立新活動');
+    await waitFor("document.querySelector('.code') && document.querySelector('.facts')?.innerText.includes('準備中')", '新活動進入準備中');
+    const id = await currentActivityId();
+    await seedQuestions(id);
+    await waitFor("document.querySelector('.facts')?.innerText.includes('1 個單位')", '快照顯示題目');
+    return { id, code: await text('.code'), previous };
+  };
+
+  // 情境 1：舊的 OPEN HTTP 回應在 CLOSED SSE 之後才抵達
+  const first = await newActivity();
+  await installGate();
+  await clickByText('開啟搶答');
+  await waitHeld(1, '開啟後的快照請求');
+  check('情境 1：開啟請求的快照回應被延遲（頁面尚未收到）', heldRequests.length === 1);
+  const closeFirst = await other.post(`/api/activities/${first.id}/close`, { confirmed: true });
+  if (closeFirst.status !== 200) throw new Error(`結束失敗：${JSON.stringify(closeFirst.result)}`);
+  await waitFor("document.querySelector('.facts')?.innerText.includes('已結束')", 'SSE 送來 CLOSED');
+  check('情境 1：SSE 先送到，畫面顯示已結束', true);
+  await releaseHeld();
+  await new Promise((r) => setTimeout(r, 400));
+  check('情境 1：舊 OPEN 回應後到，畫面仍是已結束且沒有「結束活動」按鈕',
+    (await text('.facts')).includes('已結束') && !(await evaluate("[...document.querySelectorAll('button')].some((b) => b.textContent.trim() === '結束活動')")),
+    await text('.facts'));
+
+  // 情境 2：舊活動的 HTTP 回應在切換到新活動之後才抵達
+  const second = await newActivity();
+  await installGate();
+  await clickByText('開啟搶答');
+  await waitHeld(1, '第二個活動開啟後的快照請求');
+  const closeSecond = await other.post(`/api/activities/${second.id}/close`, { confirmed: true });
+  if (closeSecond.status !== 200) throw new Error(`結束失敗：${JSON.stringify(closeSecond.result)}`);
+  await waitFor("document.querySelector('.facts')?.innerText.includes('已結束')", '第二個活動已結束');
+  await clickByText('建立新活動');
+  await waitFor("document.querySelector('.code') && document.querySelector('.facts')?.innerText.includes('準備中')", '切換到第三個活動');
+  const third = await text('.code');
+  check('情境 2：已切換到新活動（加入碼不同）', third !== second.code, `${third} / ${second.code}`);
+  await releaseHeld();
+  await new Promise((r) => setTimeout(r, 400));
+  check('情境 2：舊活動的回應後到，畫面仍是新活動（加入碼、階段不變）',
+    (await text('.code')) === third && (await text('.facts')).includes('準備中') && !(await text('.facts')).includes('搶答中'),
+    `${await text('.code')} / ${await text('.facts')}`);
+  check('回應順序測試後沒有未預期的瀏覽器例外', !browserLog.some((l) => l.startsWith('例外')), browserLog.join(' | '));
 }
 
 main().catch((error) => { check(`流程中斷：${error.message}`, false, error.stack); }).finally(async () => {

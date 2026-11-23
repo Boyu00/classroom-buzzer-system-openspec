@@ -218,5 +218,10 @@ test('兩組 DOM 工作階段加入、單題／題組送出、刷新恢復、FAI
   assert.equal(results.units[0].submissions[0].groupName, 'A組');
   assert.equal(results.units[1].submissions[0].groupName, 'B組');
   assert.equal(a.$('phase').textContent, '已結束');
-  assert.match(a.$('result-status').textContent, /待整合/);
+  // 結果頁（B #16）已存在：學生頁以 HEAD 探測成功後才提供入口，探測是非同步的，必須等它完成再斷言。
+  await until(() => !a.$('result-link').hidden);
+  assert.equal(a.$('result-link').getAttribute('href'), `/results.html?activityId=${activity.activityId}`);
+  assert.match(a.$('result-status').textContent, /可查看各組保存結果/);
+  assert.doesNotMatch(a.$('result-status').textContent, /待整合/);
+  // 結果頁不存在時仍顯示「待整合」且沒有連結，由上方「較舊 HTTP 快照不蓋回 SSE…」測試以 404 模擬覆蓋。
 });

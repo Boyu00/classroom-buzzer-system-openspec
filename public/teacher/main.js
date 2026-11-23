@@ -2,6 +2,7 @@ import { watchActivity } from '/activity-stream.js';
 import { createApi } from './api.js';
 import { el, mount } from './dom.js';
 import * as model from './model.js';
+import { createSnapshotGate } from './snapshot-gate.js';
 
 // 教師控制台。所有文字（組名、答案、試算表內容）一律經 el() 以文字節點加入，不使用 innerHTML。
 const app = document.querySelector('#app');
@@ -12,6 +13,8 @@ const api = createApi();
 let stream = null;
 let snapshot = null;
 let activityId = null;
+// 決定哪一份快照可以顯示（世代、SSE 優先、階段只前進），規則與測試見 snapshot-gate.js。
+const gate = createSnapshotGate();
 let refs = {};
 const exportState = { preview: null, latest: null, history: [], confirmedPaused: false, loadedFor: null };
 const importState = { spreadsheet: '', sheets: [], selected: [], email: '', title: '', preview: null };
@@ -59,6 +62,7 @@ const button = (label, attrs = {}, onclick) => el('button', { type: 'button', ..
 
 /* ---------- 啟動與畫面切換 ---------- */
 function detach() {
+  gate.detach();
   stream?.close();
   stream = null;
   snapshot = null;
@@ -154,13 +158,14 @@ async function dashboard() {
 }
 
 function attach(id) {
+  const token = gate.attach(id);
   stream?.close();
   activityId = id;
   snapshot = null;
   stream = watchActivity({
     activityId: id,
     statusElement: refs.status,
-    onSnapshot: applySnapshot,
+    onSnapshot: (next) => { if (gate.pushed(token, next)) applySnapshot(next); },
     onConnection: (state) => {
       if (state === 'unauthorized') { showAlert({ message: '工作階段已失效，請重新登入。' }); start(); }
     },
@@ -175,7 +180,10 @@ function applySnapshot(next) {
 
 // SSE 之外的保險：操作成功後主動抓一次最新快照，避免連線暫時中斷時畫面停在舊狀態。
 async function refresh() {
-  if (activityId) applySnapshot(await api.get(`/api/activities/${encodeURIComponent(activityId)}/snapshot`));
+  const ticket = gate.beginFetch();
+  if (!ticket) return;
+  const next = await api.get(`/api/activities/${encodeURIComponent(ticket.id)}/snapshot`);
+  if (gate.fetched(ticket, next)) applySnapshot(next);
 }
 
 function renderAll() {
