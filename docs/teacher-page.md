@@ -40,4 +40,4 @@
 - HTTP 快照請求期間若已收到 SSE 快照，丟棄該 HTTP 回應（SSE 每次狀態變更都會推送，不會漏掉較新的狀態）。
 - 同一活動的階段只前進（PREPARING → OPEN → CLOSED）；較舊階段的快照（`model.isStaleSnapshot`）一律丟棄。
 
-驗證：`tests/teacher-page.test.js` 測階段順序；`npm run e2e:teacher` 以 Chrome DevTools 的 Fetch 網域在回應階段攔住 `/snapshot`，重現兩個順序：① CLOSED 的 SSE 先到、舊 OPEN 的 HTTP 後到，畫面維持「已結束」；② 舊活動的 HTTP 回應在切換到新活動後才到，畫面維持新活動。把修正拿掉後這兩項都會失敗。登出後的舊回應由同一個世代檢查擋下，但舊畫面已被卸除，瀏覽器端看不出差異，所以沒有獨立的畫面斷言。
+驗證：`tests/teacher-page.test.js` 測階段順序；`npm run e2e:teacher` 以 Chrome DevTools 的 Fetch 網域在回應階段攔住 `/snapshot`，重現兩個順序：① CLOSED 的 SSE 先到、舊 OPEN 的 HTTP 後到，畫面維持「已結束」；② 舊活動的 HTTP 回應在切換到新活動後才到，畫面維持新活動。把修正拿掉後這兩項都會失敗。上述規則集中在 `public/teacher/snapshot-gate.js`（純邏輯，不碰 DOM），`tests/teacher-page.test.js` 以固定測試涵蓋：CLOSED 的 SSE 先到、舊 OPEN 的 HTTP 後到；切換活動後舊 HTTP／SSE 回應丟棄；登出後舊回應不恢復快照，重新登入同一活動也不接受登出前的請求；同階段較新的 SSE 內容不被延遲的 HTTP 蓋回；SSE 中斷時 HTTP 保險仍有效。拿掉世代、SSE 序號或階段檢查任一項，對應測試都會失敗。
