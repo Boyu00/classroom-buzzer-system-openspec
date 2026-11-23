@@ -6,6 +6,7 @@ import { HttpError } from './http-error.js';
 import { createActivityHttp } from './activities/http.js';
 import { createEventHttp } from './events/http.js';
 import { createImportHttp } from './import/http.js';
+import { createTeacherHttp } from './teacher/http.js';
 import { createExportHttp } from './export/http.js';
 
 export function createApp({ store, sheetsGateway }) {
@@ -28,6 +29,7 @@ export function createApp({ store, sheetsGateway }) {
   app.use('/api', events.router);
   app.locals.closeEvents = () => events.close();
   app.use('/api', createImportHttp(store, access, sheetsGateway));
+  app.use('/api', createTeacherHttp(store, access));
   app.use('/api', createExportHttp(store, access));
 
   app.get('/api/health', (_req, res) => {
