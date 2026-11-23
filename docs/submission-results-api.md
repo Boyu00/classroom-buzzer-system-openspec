@@ -70,6 +70,6 @@ PR #29 review 補充：results 的 questions 只有題號與順序，不含原�
 
 常見 code：400 INVALID_ANSWERS；404 UNIT_NOT_FOUND；409 INVALID_PHASE／RESULTS_NOT_READY／INCOMPLETE_SUBMISSION；401 SESSION_REQUIRED／STUDENT_REQUIRED；403 STUDENT_REQUIRED／ACTIVITY_FORBIDDEN。其餘 Host、Origin、CSRF 檢查與既有 API 一致。資料庫故障只回通用 500，不回 SQL 或他組資料。
 
-`npm test`：目前 75／75 通過。tests/submissions.test.js 包含 1,000 emoji 邊界、原文保存、12 次並行重試、相同時間戳、題組故障回滾、兩種佇列競態順序、HTTP 競態、API 隱私、完整排名、題組勝次、空單位、結果中途故障與 OPEN／CLOSED 重啟；新增同步測試見 docs/live-sync-api.md。
+`npm test`：目前 87／87 通過。tests/submissions.test.js 包含 1,000 emoji 邊界、原文保存、12 次並行重試、相同時間戳、題組故障回滾、兩種佇列競態順序、HTTP 競態、API 隱私、完整排名、題組勝次、空單位、結果中途故障與 OPEN／CLOSED 重啟；新增同步測試見 docs/live-sync-api.md。
 
 題目與故障 trigger 僅在獨立測試資料庫建立；不修改使用者活動，亦不代表真實 Sheets、完整操作頁面或人工 AC 已通過。
