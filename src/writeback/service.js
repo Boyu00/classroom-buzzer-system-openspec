@@ -15,10 +15,11 @@ const DEFINITE_REJECTION = new Set([
   'SHEETS_PERMISSION_DENIED', 'SPREADSHEET_NOT_FOUND', 'SHEETS_REQUEST_REJECTED', 'SHEETS_RATE_LIMITED',
   'SHEETS_AUTH_FAILED', 'SHEETS_API_DISABLED', 'INVALID_WRITE',
 ]);
-// 已知曾經嘗試寫入的狀態；線上值等於預期答案時，才可認定是本系統寫入的結果。
-const ATTEMPTED = new Set(['SUCCEEDED', 'PENDING_VERIFICATION']);
+// 本系統曾經確認寫入（SUCCEEDED）或可能已寫入（PENDING_VERIFICATION）的題目，才可把「線上值等於答案」認定為自己的寫入。
+// 這份證據只增不減：之後的批次即使在寫入前就讀取失敗或遇到結構衝突，也不能抹掉先前成功寫入的事實。
 
 const REASONS = {
+  STRUCTURE_CHANGED_AFTER_WRITE: '寫入後回讀發現工作表結構已改變，這一格可能已寫入；系統沒有再修改任何內容。請依逐題紀錄核對線上內容。',
   STRUCTURE_CHANGED: '工作表結構已變更（工作表被刪除、改名、增減列欄或合併範圍改變）。請恢復原結構，或另建活動重新匯入。',
   CELL_CHANGED: '原格內容已不是匯入時的標記（可能被移動、刪除或改寫）。請恢復原內容，或另建活動重新匯入。',
   CHANGED_EXTERNALLY: '寫入後回讀發現原格被其他內容取代，已停止，未再覆寫。',
@@ -59,12 +60,9 @@ function loadPlan(db, activity) {
       answer: winner ? answers.get(`${winner.submission_id}\0${q.question_id}`) ?? null : null,
     };
   });
-  // 逐題找「最近一次有資訊的紀錄」：未嘗試（PENDING）的不蓋掉先前已知的狀態。
-  const prior = new Map();
-  for (const row of db.prepare(`SELECT i.question_id, i.status FROM export_items i JOIN exports e ON e.export_id = i.export_id
-    WHERE i.activity_id = ? AND i.status <> 'PENDING' ORDER BY e.created_at, e.rowid`).all(activityId)) {
-    prior.set(row.question_id, row.status);
-  }
+  // 曾確認寫入或可能已寫入的題目（見檔頭說明）；答案在 CLOSED 後固定，所以同題的預期內容不會變。
+  const prior = new Set(db.prepare(`SELECT DISTINCT question_id FROM export_items
+    WHERE activity_id = ? AND status IN ('SUCCEEDED', 'PENDING_VERIFICATION')`).all(activityId).map((r) => r.question_id));
   return {
     structureFingerprint: db.prepare('SELECT structure_fingerprint FROM questions WHERE activity_id = ? LIMIT 1').get(activityId)?.structure_fingerprint,
     source: { spreadsheetId: source.spreadsheet_id, sheetIds: JSON.parse(source.sheet_ids_json) },
@@ -96,7 +94,7 @@ function evaluate(plan, sheets) {
       if (verdict === 'CONFLICT') reason = 'CELL_CHANGED';
     } else if (same(live, item.originalMarker)) {
       verdict = 'WRITE';
-    } else if (same(live, item.answer) && ATTEMPTED.has(plan.prior.get(item.questionId))) {
+    } else if (same(live, item.answer) && plan.prior.has(item.questionId)) {
       verdict = 'DONE';
     } else {
       verdict = 'CONFLICT'; reason = 'CELL_CHANGED';
@@ -201,8 +199,12 @@ export function createWritebackService(store, auth, gateway, { now = () => new D
     });
   }
 
-  function fail(view, writeError) {
+  // wroteAttempted：已經送出寫入。這時不能再說「沒有覆寫任何內容」，因為部分格子可能已寫入。
+  function fail(view, writeError, { wroteAttempted = false } = {}) {
     const details = view;
+    if (view.status === 'CONFLICT' && wroteAttempted) {
+      return new HttpError(409, 'EXPORT_CONFLICT', '寫入已送出，但回讀發現來源 Sheets 被改動（內容或結構不同）。部分格子可能已寫入，系統沒有再修改任何內容；請依逐題紀錄核對線上內容，必要時恢復原狀後重試。', details);
+    }
     if (view.status === 'CONFLICT') {
       return new HttpError(409, 'EXPORT_CONFLICT', '來源 Sheets 與匯入時不同，已停止寫回，未覆寫任何內容。請恢復原內容，或另建活動重新匯入。', details);
     }
@@ -305,8 +307,11 @@ export function createWritebackService(store, auth, gateway, { now = () => new D
                 for (const item of toWrite) results.set(item.questionId, { status: 'PENDING_VERIFICATION', errorCode: writeError?.code ?? 'VERIFY_UNAVAILABLE' });
               } else {
                 const written = new Set(toWrite.map((i) => i.questionId));
-                for (const item of evaluate(plan, after.sheets).items.filter((i) => written.has(i.questionId))) {
-                  if (same(item.live, item.answer)) results.set(item.questionId, { status: 'SUCCEEDED' });
+                const check = evaluate(plan, after.sheets);
+                for (const item of check.items.filter((i) => written.has(i.questionId))) {
+                  // 結構已變時座標不可信：即使文字相同也不能宣告成功。
+                  if (!check.structureOk) results.set(item.questionId, { status: 'CONFLICT', errorCode: 'STRUCTURE_CHANGED_AFTER_WRITE' });
+                  else if (same(item.live, item.answer)) results.set(item.questionId, { status: 'SUCCEEDED' });
                   else if (same(item.live, item.originalMarker)) results.set(item.questionId, { status: 'FAILED', errorCode: writeError?.code ?? 'NOT_WRITTEN' });
                   else results.set(item.questionId, { status: 'CONFLICT', errorCode: 'CHANGED_EXTERNALLY' });
                 }
@@ -317,12 +322,12 @@ export function createWritebackService(store, auth, gateway, { now = () => new D
           if (error instanceof HttpError && error.code?.startsWith('EXPORT_')) throw error; // 已記錄的衝突
           if (!error?.alreadyRecorded) pendingAll(attempted ? 'PENDING_VERIFICATION' : 'FAILED', attempted ? 'VERIFY_UNAVAILABLE' : 'UNEXPECTED');
           const view = await finalize(activityId, exportId, results);
-          throw fail(view, error instanceof HttpError ? error : undefined);
+          throw fail(view, error instanceof HttpError ? error : undefined, { wroteAttempted: attempted });
         }
 
         const view = await finalize(activityId, exportId, results);
         if (view.status === 'SUCCEEDED') return { data: view };
-        throw fail(view, writeError instanceof HttpError && DEFINITE_REJECTION.has(writeError.code) ? writeError : undefined);
+        throw fail(view, writeError instanceof HttpError && DEFINITE_REJECTION.has(writeError.code) ? writeError : undefined, { wroteAttempted: attempted });
       } finally {
         running.delete(activityId);
       }

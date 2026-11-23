@@ -36,6 +36,7 @@ function makeBook() {
       if (this.mode === 'timeoutAfterApply') { apply(cells); throw new HttpError(502, 'SHEETS_UNAVAILABLE', '逾時'); }
       if (this.mode === 'timeoutAfterApplyBlind') { apply(cells); this.readsDown = true; throw new HttpError(502, 'SHEETS_UNAVAILABLE', '逾時'); }
       if (this.mode === 'timeoutNoApplyBlind') { this.readsDown = true; throw new HttpError(502, 'SHEETS_UNAVAILABLE', '逾時'); }
+      if (this.mode === 'renameAfterApply') { apply(cells); this.sheets.get(2).title = '寫入期間被改名'; return { updatedCells: cells.length }; }
       if (this.mode === 'partial') { apply(cells.slice(0, 1)); throw new HttpError(502, 'SHEETS_UNAVAILABLE', '逾時'); }
       apply(cells);
       return { updatedCells: cells.length };
@@ -389,4 +390,53 @@ test('選取順序為 [2,1] 時結構重驗與寫回仍正確（指紋依選取�
   assert.equal(r.status, 200);
   assert.deepEqual([s.book.cell(2, 0, 0), s.book.cell(2, 4, 2), s.book.cell(1, 3, 0)], ['答3', '答4', '答2']);
   assert.equal(s.book.cell(1, 1, 0), '{{Q:1}}', '無人作答的單題不變');
+});
+
+test('回歸（review #38）：成功後遇到「寫入前讀取失敗」，不能抹掉先前成功寫入的證據；恢復後可確認完成且不重寫', async (t) => {
+  const s = await setup(t);
+  assert.equal((await s.write()).status, 200);
+  assert.equal(s.book.writes.length, 1);
+
+  s.book.readsDown = true;
+  const down = await s.write();
+  assert.equal(down.status, 502);
+  assert.equal(down.result.error.details.status, 'FAILED');
+
+  s.book.readsDown = false; // 沒有修改任何儲存格
+  const again = await s.write();
+  assert.equal(again.status, 200, '先前確認寫入的內容仍被識別，不是衝突');
+  assert.equal(again.result.data.status, 'SUCCEEDED');
+  assert.equal(s.book.writes.length, 1, '不重寫已確認的格子');
+});
+
+test('回歸（review #38）：成功後遇到結構衝突、恢復結構後，先前成功寫入的證據仍在', async (t) => {
+  const s = await setup(t);
+  assert.equal((await s.write()).status, 200);
+  const original = s.book.sheets.get(2).title;
+  s.book.sheets.get(2).title = '暫時改名';
+  assert.equal((await s.write()).status, 409);
+  s.book.sheets.get(2).title = original;
+  const again = await s.write();
+  assert.equal(again.status, 200);
+  assert.equal(s.book.writes.length, 1);
+});
+
+test('回歸（review #38）：寫入後回讀發現結構改變，即使文字相同也不能宣告成功；訊息說明部分格子可能已寫入', async (t) => {
+  const s = await setup(t);
+  s.book.mode = 'renameAfterApply';
+  const r = await s.write();
+  assert.deepEqual([r.status, r.result.error.code], [409, 'EXPORT_CONFLICT']);
+  const view = r.result.error.details;
+  assert.equal(view.status, 'CONFLICT');
+  assert.ok(view.items.every((i) => i.status === 'CONFLICT' && i.errorCode === 'STRUCTURE_CHANGED_AFTER_WRITE'), JSON.stringify(view.items));
+  assert.match(r.result.error.message, /部分格子可能已寫入/);
+  assert.doesNotMatch(r.result.error.message, /未覆寫任何內容/);
+  assert.ok(view.items.every((i) => /可能已寫入/.test(i.message)));
+  for (const [sheetId, row, column, text] of TARGETS) assert.equal(s.book.cell(sheetId, row, column), text, '格子確實已寫入，所以不能說沒有寫入');
+
+  // 寫入前的衝突仍明確說沒有寫入任何內容。
+  const before = await setup(t);
+  before.book.sheets.get(2).title = '改名';
+  const stopped = await before.write();
+  assert.match(stopped.result.error.message, /未覆寫任何內容/);
 });
