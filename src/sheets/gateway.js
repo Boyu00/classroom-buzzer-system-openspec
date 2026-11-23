@@ -9,6 +9,8 @@ const DEFAULT_TIMEOUT_MS = 15_000;
 // 保護本機記憶體：預設 1,000 列 × 26 欄 = 26,000 格；遠大於課堂用表。
 const MAX_CELLS_PER_SHEET = 200_000;
 const MAX_CELLS_TOTAL = 500_000;
+const MAX_WRITE_CELLS = 500;
+const MAX_CELL_CHARACTERS = 50_000; // Google Sheets 單一儲存格上限
 
 const META_FIELDS = 'spreadsheetId,properties.title,sheets.properties(sheetId,title,index,sheetType,gridProperties(rowCount,columnCount))';
 const DATA_FIELDS = 'sheets(properties(sheetId,title,gridProperties(rowCount,columnCount)),merges,data(startRow,startColumn,rowData(values(formattedValue))))';
@@ -144,6 +146,36 @@ export function createSheetsGateway({ credentials, baseUrl = DEFAULT_BASE_URL, t
 
   return {
     serviceAccountEmail,
+
+    /**
+     * 以 RAW 純文字寫入指定單一儲存格，只更新值，不動格式與其他內容。
+     * 以 sheetId 與座標（gridRange）定位，不依工作表名稱。一次請求內的更新由 Google 以原子方式套用。
+     * 注意：逾時或網路錯誤時，無法得知 Google 是否已套用；呼叫端必須回讀核對，不可只憑回應判斷成功。
+     * @param {{spreadsheet: string, cells: {sheetId: number, rowIndex: number, columnIndex: number, value: string}[]}} args
+     */
+    async writeCells({ spreadsheet, cells }) {
+      const id = resolveId(spreadsheet);
+      const valid = Array.isArray(cells) && cells.length > 0 && cells.length <= MAX_WRITE_CELLS && cells.every((c) =>
+        c && [c.sheetId, c.rowIndex, c.columnIndex].every((n) => Number.isSafeInteger(n) && n >= 0)
+        && typeof c.value === 'string' && c.value.isWellFormed() && c.value.length <= MAX_CELL_CHARACTERS);
+      if (!valid) throw new HttpError(400, 'INVALID_WRITE', '寫入內容不合法。');
+      const response = await request(`/spreadsheets/${encodeURIComponent(id)}/values:batchUpdateByDataFilter`, {
+        method: 'POST',
+        body: {
+          valueInputOption: 'RAW',
+          includeValuesInResponse: false,
+          data: cells.map((c) => ({
+            dataFilter: { gridRange: {
+              sheetId: c.sheetId, startRowIndex: c.rowIndex, endRowIndex: c.rowIndex + 1,
+              startColumnIndex: c.columnIndex, endColumnIndex: c.columnIndex + 1,
+            } },
+            majorDimension: 'ROWS',
+            values: [[c.value]],
+          })),
+        },
+      });
+      return { updatedCells: Number.isSafeInteger(response.totalUpdatedCells) ? response.totalUpdatedCells : null };
+    },
 
     async listSheets({ spreadsheet }) {
       const info = await describe(resolveId(spreadsheet));

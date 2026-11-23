@@ -109,7 +109,10 @@ export function createImportService(store, auth, gateway, { now = Date.now } = {
           (preview_id, token_hash, activity_id, teacher_session_id, import_revision, parsed_json, created_at, expires_at)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`).run(
           randomUUID(), hashToken(previewToken), activityId, teacher.session_id, current.import_revision,
-          JSON.stringify({ units: parsed.units, summary: parsed.summary, structureFingerprint: parsed.structureFingerprint }),
+          JSON.stringify({
+            units: parsed.units, summary: parsed.summary, structureFingerprint: parsed.structureFingerprint,
+            source: { spreadsheetId: sheets[0].spreadsheetId, sheetIds: sheets.map((sheet) => sheet.sheetId) },
+          }),
           new Date(now()).toISOString(), expiresAt,
         );
         return { data: { previewToken, expiresAt, importRevision: current.import_revision, ...previewView(parsed) } };
@@ -138,6 +141,9 @@ export function createImportService(store, auth, gateway, { now = Date.now } = {
         // 整批替換：任何一步失敗，共用交易回滾，舊匯入完整保留。
         db.prepare('DELETE FROM questions WHERE activity_id = ?').run(activityId);
         db.prepare('DELETE FROM units WHERE activity_id = ?').run(activityId);
+        db.prepare('DELETE FROM import_sources WHERE activity_id = ?').run(activityId);
+        db.prepare('INSERT INTO import_sources VALUES (?, ?, ?)').run(
+          activityId, parsed.source.spreadsheetId, JSON.stringify(parsed.source.sheetIds));
         const insertUnit = db.prepare('INSERT INTO units VALUES (?, ?, ?, ?)');
         const insertQuestion = db.prepare('INSERT INTO questions VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
         for (const unit of parsed.units) {

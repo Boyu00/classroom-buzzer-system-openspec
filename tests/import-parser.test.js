@@ -129,6 +129,7 @@ test('AC-03：合併儲存格內的答案格被拒絕，單格範圍外不受影
   const merges = [{ startRow: 2, endRow: 3, startCol: 1, endCol: 3 }];
   const bad = parseSheets([sheet('S', 1, [[2, 1, '{{Q:1}}'], [5, 1, '{{Q:2}}']], { merges })]);
   assert.deepEqual(bad.errors.map((e) => [e.code, e.location]), [['MERGED_ANSWER_CELL', 'S!B3']]);
+  assert.match(bad.errors[0].message, /取消.*合併/, '訊息要告訴老師如何處理');
   const fine = parseSheets([sheet('S', 1, [[3, 1, '{{Q:1}}']], { merges })]);
   assert.equal(fine.ok, true);
 });

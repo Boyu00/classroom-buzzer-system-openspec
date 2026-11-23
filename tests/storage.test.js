@@ -18,7 +18,7 @@ test('migration 可重跑，重新開啟保留資料、原題號與來源映射'
   }
   db = openDatabase(path);
   try {
-    assert.equal(db.prepare('SELECT count(*) AS n FROM schema_migrations').get().n, 2);
+    assert.equal(db.prepare('SELECT count(*) AS n FROM schema_migrations').get().n, 3);
     const question = db.prepare('SELECT * FROM questions').get();
     assert.equal(question.question_id, '4');
     assert.equal(question.sheet_id, 17);

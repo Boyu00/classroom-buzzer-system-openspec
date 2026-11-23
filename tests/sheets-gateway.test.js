@@ -343,3 +343,42 @@ test('授權較慢但在期限內完成時正常運作，計時器不會讓程�
   assert.equal((await gateway.listSheets({ spreadsheet: ID })).title, '測試試算表');
   assert.equal(fake.requests[0].auth, `Bearer ${TOKEN}`);
 });
+
+test('writeCells：以 RAW 與 sheetId 的 gridRange 逐格定位、一次批次請求；回應只是參考，不代表已核對', async (t) => {
+  const fake = await fakeSheets(t, () => ({ status: 200, json: { spreadsheetId: ID, totalUpdatedCells: 2 } }));
+  const result = await gatewayFor(fake.baseUrl).writeCells({
+    spreadsheet: `https://docs.google.com/spreadsheets/d/${ID}/edit`,
+    cells: [{ sheetId: 0, rowIndex: 1, columnIndex: 0, value: '=1+1' }, { sheetId: 5, rowIndex: 4, columnIndex: 2, value: '中文\n換行' }],
+  });
+  assert.deepEqual(result, { updatedCells: 2 });
+  assert.equal(fake.requests.length, 1);
+  const [request] = fake.requests;
+  assert.equal(request.method, 'POST');
+  assert.equal(request.url, `/spreadsheets/${ID}/values:batchUpdateByDataFilter`);
+  assert.equal(request.auth, `Bearer ${TOKEN}`);
+  assert.deepEqual(request.body, {
+    valueInputOption: 'RAW', includeValuesInResponse: false,
+    data: [
+      { dataFilter: { gridRange: { sheetId: 0, startRowIndex: 1, endRowIndex: 2, startColumnIndex: 0, endColumnIndex: 1 } }, majorDimension: 'ROWS', values: [['=1+1']] },
+      { dataFilter: { gridRange: { sheetId: 5, startRowIndex: 4, endRowIndex: 5, startColumnIndex: 2, endColumnIndex: 3 } }, majorDimension: 'ROWS', values: [['中文\n換行']] },
+    ],
+  });
+});
+
+test('writeCells：不合法的寫入在送出前拒絕；Google 錯誤對應成穩定錯誤碼', async (t) => {
+  const fake = await fakeSheets(t, () => ({ status: 403, json: { error: { status: 'PERMISSION_DENIED' } } }));
+  const gateway = gatewayFor(fake.baseUrl);
+  const cell = { sheetId: 0, rowIndex: 0, columnIndex: 0, value: 'x' };
+  for (const cells of [undefined, [], [{ ...cell, value: 5 }], [{ ...cell, rowIndex: -1 }], [{ ...cell, sheetId: 1.5 }],
+    [{ ...cell, value: '\ud800' }], [{ ...cell, value: 'x'.repeat(50_001) }], Array(501).fill(cell)]) {
+    const error = await rejects(gateway.writeCells({ spreadsheet: ID, cells }));
+    assert.deepEqual([error.status, error.code], [400, 'INVALID_WRITE']);
+  }
+  assert.equal((await rejects(gateway.writeCells({ spreadsheet: 'bad', cells: [cell] }))).code, 'INVALID_SPREADSHEET');
+  assert.equal(fake.requests.length, 0, '不合法內容不發出任何請求');
+
+  const denied = await rejects(gateway.writeCells({ spreadsheet: ID, cells: [cell] }));
+  assert.deepEqual([denied.status, denied.code], [403, 'SHEETS_PERMISSION_DENIED']);
+  assert.match(denied.message, new RegExp(EMAIL.replaceAll('.', '\.')));
+  assert.match(denied.message, /編輯者/);
+});

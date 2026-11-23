@@ -25,7 +25,8 @@ function inMerge(merges, row, column) {
     && (m.endRow - m.startRow) * (m.endCol - m.startCol) > 1);
 }
 
-function fingerprint(sheets, scanned) {
+// 匯出寫回時以相同規則重算結構指紋（題目座標取自資料庫、其餘取自線上現況）。
+export function fingerprint(sheets, scanned) {
   const canonical = {
     sheets: sheets.map((s) => ({
       spreadsheetId: s.spreadsheetId, sheetId: s.sheetId, title: s.title,
@@ -70,7 +71,7 @@ export function parseSheets(sheets) {
           return;
         }
         if (inMerge(merges, row, column)) {
-          fail('MERGED_ANSWER_CELL', `答案格不可為合併儲存格：${parsed.marker}`, location);
+          fail('MERGED_ANSWER_CELL', `答案格不可為合併儲存格：${parsed.marker}。請先在試算表副本取消此格的合併（選取該格 → 格式 → 合併儲存格 → 取消合併），再重新預覽。`, location);
           return;
         }
         if (questionSites.has(parsed.questionId)) {
