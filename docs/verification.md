@@ -124,3 +124,33 @@ Boyu00 正式 Approve：review-6011416078，對應 head f51a6f2；組員記錄 N
 **真實 Google Sheets**（feat/sheets-writeback，兩份測試副本，同樣在 Node 24.22.3）：單題表 25／25、題組表 22／22 通過，內容與 2026-11-22 的結果一致（RAW 純文字、其他內容與格式不變、重複寫回識別、改寫原格 → 409 停止）。驗收腳本不在 repository；跑完已還原測試副本的標記。
 
 限制：E2E 的 Sheets 仍是記憶體替身（真實 Sheets 只有上面那項後端流程驗收）；未涵蓋手機版面、螢幕閱讀器與其他瀏覽器。
+
+## 全功能合併後的全回歸（2026-11-24，tasks 9.1）
+
+基準：main 已含 #35（CSV）、#36（結果頁）、#37（教師頁）、#38（原格寫回），加本 PR 的整合測試。環境：Windows，Node v24.22.3（conda 環境 `node24`）。
+
+| 命令 | 結果 |
+| --- | --- |
+| `npm test` | 184／184 通過 |
+| `npm run e2e:teacher`（真實 Chrome） | 40／40 通過（含 #37 的快照順序情境；結果頁與 CSV 連結依端點存在而出現） |
+| `npm run e2e:results`（真實 Chrome） | 20／20 通過 |
+| `node --test tests/integration-scale.test.js` 連跑 3 次 | 每次 2／2 通過 |
+
+**各功能都已隨實作提交測試（對照）**
+
+| 功能 | 測試檔 |
+| --- | --- |
+| 專案基礎、資料層、migration | `server.test.js`、`storage.test.js` |
+| 身分、活動建立與狀態控制 | `auth.test.js`、`activities.test.js` |
+| 受理、題組、排名、結束、競態 | `submissions.test.js` |
+| SSE 同步、重連、隱私 | `events.test.js`、`activity-stream.test.js` |
+| 學生頁 | `student-page.test.js` |
+| Sheets gateway（讀取、寫入、錯誤對應） | `sheets-gateway.test.js` |
+| 標記解析、預覽、確認匯入 | `import-parser.test.js`、`import-service.test.js` |
+| 教師頁（含快照順序）、目前活動 API | `teacher-page.test.js`、`teacher-activity.test.js`、`e2e:teacher` |
+| 結果頁 | `results-page.test.js`、`e2e:results` |
+| CSV 匯出與公式防護 | `csv.test.js` |
+| 原格寫回（預覽、重驗、回讀、重試、衝突、互斥） | `writeback.test.js` |
+| 1 師／10 組／20 題整合 | `integration-scale.test.js` |
+
+**尚未完成**：#18 的教師頁寫回面板（PR #40）合併後需再跑一次全回歸並更新這裡，所以 tasks 9.1 先不勾選。Sheets 在自動測試與 E2E 中是記憶體替身；真實 Sheets 驗收見各功能文件與 #21。
