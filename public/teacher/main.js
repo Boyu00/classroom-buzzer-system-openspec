@@ -444,7 +444,7 @@ const EXPORT_LABELS = model.EXPORT_STATUS_LABEL;
 const statusBadge = (status) => el('span', { class: `badge status-${status.toLowerCase()}` }, EXPORT_LABELS[status] ?? status);
 
 function exportItemsTable(items, caption) {
-  return el('table', {},
+  return el('table', { class: 'export-table' },
     el('caption', {}, caption),
     el('thead', {}, el('tr', {}, ['題號', '目標格', '狀態', '說明'].map((h) => el('th', { scope: 'col' }, h)))),
     el('tbody', {}, items.map((item) => el('tr', {},
@@ -475,7 +475,7 @@ function renderExportPreview(preview) {
         : '試算表結構與匯入時不同（工作表被刪除、改名、增減列欄或合併範圍改變），已停止。請恢復原結構，或另建活動重新匯入。'),
     preview.units.map((unit) => el('article', { class: 'unit' },
       el('h4', {}, `第 ${unit.order + 1} 單位（${model.TYPE_LABEL[unit.type]}）${unit.winnerGroupName ? `　勝出：${unit.winnerGroupName}` : '　無人作答'}`),
-      el('table', {},
+      el('table', { class: 'export-table' },
         el('caption', {}, `第 ${unit.order + 1} 單位的寫回內容`),
         el('thead', {}, el('tr', {}, ['題號', '目標格', '狀態', '寫入答案'].map((h) => el('th', { scope: 'col' }, h)))),
         el('tbody', {}, unit.questions.map((q) => el('tr', { class: q.status === 'CONFLICT' ? 'pending' : null },
@@ -505,7 +505,7 @@ function renderExport() {
     el('p', { class: 'hint' }, '注意：寫回後，原格的 {{Q:…}} 標記會被答案取代。之後若要用同一份試算表重新匯入，請先把標記貼回去，或另外複製一份範本。'),
     el('div', { class: 'actions' }, previewBtn),
     renderExportPreview(preview),
-    preview ? el('div', { class: 'stack' },
+    preview ? el('div', { class: 'stack wide-stack' },
       el('label', { class: 'choice', for: 'export-paused' }, paused, el('span', {}, '我已請其他人暫停編輯此試算表，寫回完成後我會再恢復。')),
       el('p', { id: 'export-hint', class: 'hint' }, preview.canWrite
         ? (confirmedPaused ? '寫入後系統會逐格回讀核對，全部相符才會顯示成功。' : '請先勾選上方確認。')

@@ -104,3 +104,9 @@ a:focus-visible { outline: 3px solid #1b6ec2; outline-offset: 3px; }
 details > summary { cursor: pointer; margin-top: 16px; }
 .wide-cell { width: 55%; }
 .wide-cell .text, td .text { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* 寫回面板：固定表格欄寬，避免「學習單!G5」被拆成兩行；確認說明不被擠窄 */
+.export-table th:nth-child(1) { width: 10%; }
+.export-table th:nth-child(2) { width: 24%; }
+.export-table th:nth-child(3) { width: 28%; }
+.wide-stack { max-width: none; }
