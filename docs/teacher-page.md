@@ -53,3 +53,19 @@
 - 同一活動的階段只前進（PREPARING → OPEN → CLOSED）；較舊階段的快照（`model.isStaleSnapshot`）一律丟棄。
 
 驗證：`tests/teacher-page.test.js` 測階段順序；`npm run e2e:teacher` 以 Chrome DevTools 的 Fetch 網域在回應階段攔住 `/snapshot`，重現兩個順序：① CLOSED 的 SSE 先到、舊 OPEN 的 HTTP 後到，畫面維持「已結束」；② 舊活動的 HTTP 回應在切換到新活動後才到，畫面維持新活動。把修正拿掉後這兩項都會失敗。上述規則集中在 `public/teacher/snapshot-gate.js`（純邏輯，不碰 DOM），`tests/teacher-page.test.js` 以固定測試涵蓋：CLOSED 的 SSE 先到、舊 OPEN 的 HTTP 後到；切換活動後舊 HTTP／SSE 回應丟棄；登出後舊回應不恢復快照，重新登入同一活動也不接受登出前的請求；同階段較新的 SSE 內容不被延遲的 HTTP 蓋回；SSE 中斷時 HTTP 保險仍有效。拿掉世代、SSE 序號或階段檢查任一項，對應測試都會失敗。
+
+## 寫回面板的活動綁定與提示文案（review #40）
+
+寫回面板的狀態與請求流程在 `public/teacher/export-controller.js`（純邏輯，不碰 DOM），`main.js` 只負責畫面：
+
+- 每個請求（預覽、載入紀錄、寫回）送出前擷取「活動＋畫面世代」（`gate.current()`），回應、錯誤、finally 更新狀態前都比對 `gate.same()`；切換活動、登出、重新登入後抵達的舊回覆一律丟棄，不更新畫面、不顯示錯誤、不顯示成功提示。
+- 同一種操作只接受最後一次請求的回覆（序號），連點造成的舊預覽不會蓋掉新預覽。
+- **寫回一定使用預覽當下的活動**：預覽綁定 `previewScope`，寫回前再確認仍在同一個活動與世代，且預覽可寫回、老師已勾選暫停編輯，否則不送出任何請求。
+- 切換活動與登出時 `reset()`：清除預覽、暫停編輯確認、歷史與最近結果。
+
+提示文案（`model.describeExport`）依**逐題狀態與錯誤碼**產生，不再只看批次狀態：
+- 部分成功、部分失敗：說明部分格子已寫入並核對成功，其餘失敗，已成功的不會重複寫入。
+- 寫入後才發現的衝突（`STRUCTURE_CHANGED_AFTER_WRITE`、`CHANGED_EXTERNALLY`）、含待核對或已成功格的衝突：說明部分格子可能已寫入，請依逐題紀錄核對。
+- 只有在能確定時才說「沒有寫入任何格」：寫入前就停止的衝突，或全部格子都確認未寫入。
+
+驗證：`tests/teacher-export.test.js`（16 項）以可控制回應順序的假 API 涵蓋延遲預覽、延遲歷史紀錄、延遲寫回回覆（成功與失敗）在切換活動或登出後才抵達、重新登入同一活動、連續預覽、預覽綁定原活動，以及各種提示文案；`npm run e2e:teacher` 另在真實 Chrome 檢查切換活動後面板不殘留（確認 `main.js` 確實接上 reset）。將控制器的範圍／序號檢查或提示分支拿掉，對應測試都會失敗。

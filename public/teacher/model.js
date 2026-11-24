@@ -117,13 +117,36 @@ export function exportCounts(view) {
   return counts;
 }
 
-const ADVICE = {
-  SUCCEEDED: null,
-  FAILED: '結果仍保留，Google Sheets 沒有被修改。排除原因（例如分享為「編輯者」、網路）後可重試。',
-  PENDING_VERIFICATION: '無法確認 Google Sheets 是否已寫入。請按「重試寫回」，系統會先回讀線上內容核對，已寫入的不會重複寫入。',
-  CONFLICT: '來源與匯入時不同，已停止且沒有覆寫任何內容。請恢復原內容，或另建活動重新匯入。',
-  WRITING: '寫入進行中，請稍候。',
-};
+// 寫入已送出後才發生的錯誤碼：這些情況不能保證 Google Sheets 沒有被修改。
+const POST_WRITE_CODES = new Set(['STRUCTURE_CHANGED_AFTER_WRITE', 'CHANGED_EXTERNALLY', 'VERIFY_UNAVAILABLE']);
+
+/**
+ * 依逐題狀態與錯誤碼產生處理建議；無法確定時明說「可能已寫入」，絕不保證未修改。
+ * 批次狀態只是摘要：FAILED 批次可能含已成功的格子，CONFLICT 也可能發生在寫入之後。
+ */
+function adviceFor(view, counts) {
+  const items = view.items ?? [];
+  const succeeded = counts.SUCCEEDED ?? 0;
+  const pending = counts.PENDING_VERIFICATION ?? 0;
+  const afterWrite = items.some((item) => POST_WRITE_CODES.has(item.errorCode));
+  switch (view.status) {
+    case 'SUCCEEDED':
+      return null;
+    case 'FAILED':
+      if (succeeded > 0) return '部分格子已寫入並核對成功，其餘失敗。請依下表逐題核對線上內容；排除原因（例如分享為「編輯者」、網路）後可重試，已成功的不會重複寫入。';
+      if (pending > 0 || afterWrite) return '寫入結果不完整，部分格子可能已寫入。請依下表逐題核對線上內容，再重試。';
+      return '這次沒有寫入任何格（Google 明確拒絕、回讀確認未寫入，或寫入前就失敗）。結果仍保留；排除原因（例如分享為「編輯者」、網路）後可重試。';
+    case 'PENDING_VERIFICATION':
+      return '無法確認 Google Sheets 是否已寫入。請按「重試寫回」，系統會先回讀線上內容核對，已寫入的不會重複寫入。';
+    case 'CONFLICT':
+      if (succeeded > 0 || pending > 0 || afterWrite) return '寫入已送出，但回讀發現來源被改動（內容或結構不同）。部分格子可能已寫入；系統沒有再修改任何內容。請依下表逐題核對線上內容，必要時恢復原狀後重試。';
+      return '來源與匯入時不同，寫入前就已停止，這次沒有寫入任何格。請恢復原內容，或另建活動重新匯入。';
+    case 'WRITING':
+      return '寫入進行中，請稍候。';
+    default:
+      return null;
+  }
+}
 const TONE = { SUCCEEDED: 'ok', FAILED: 'bad', PENDING_VERIFICATION: 'warn', CONFLICT: 'bad', WRITING: 'warn' };
 
 /** 一次匯出的整體說明；絕不把部分失敗說成成功。 */
@@ -135,7 +158,7 @@ export function describeExport(view) {
   const headline = view.status === 'SUCCEEDED'
     ? (total ? `全部 ${total} 格已寫入並回讀核對。` : '沒有需要寫入的答案。')
     : `${done} / ${total} 格已核對成功。`;
-  return { headline, tone: TONE[view.status] ?? 'warn', advice: ADVICE[view.status] ?? null, counts };
+  return { headline, tone: TONE[view.status] ?? 'warn', advice: adviceFor(view, counts), counts };
 }
 
 /** 可寫回的條件：預覽通過、老師確認暫停編輯，且沒有進行中的操作。 */

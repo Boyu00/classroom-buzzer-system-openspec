@@ -359,8 +359,19 @@ async function main() {
     return { id, code: await text('.code'), previous };
   };
 
+  // review #40：寫回面板的預覽、確認與結果必須跟著活動走，切換活動後不得殘留（接線檢查；控制器本身有單元測試）。
+  await clickByText('預覽寫回');
+  await waitFor("document.querySelector('section:has(#export-title) .preview-box')", '切換前的寫回預覽');
+  await evaluate("document.querySelector('#export-paused').click()");
+  check('切換前：面板有預覽且已勾選暫停確認', (await text('section:has(#export-title)')).includes('寫回預覽') && await evaluate("document.querySelector('#export-paused').checked"));
+  const exportPanelText = () => evaluate("document.querySelector('section:has(#export-title)').textContent");
+  const beforeSwitch = await newActivity();
+  const leftover = await exportPanelText();
+  check('review #40：切換到新活動後，舊活動的預覽、答案與確認不殘留', !leftover.includes('寫回預覽') && !leftover.includes('勝出：') && !(await evaluate("Boolean(document.querySelector('#export-write') || document.querySelector('#export-paused'))")), leftover.slice(0, 200));
+  void beforeSwitch;
+
   // 情境 1：舊的 OPEN HTTP 回應在 CLOSED SSE 之後才抵達
-  const first = await newActivity();
+  const first = beforeSwitch;
   await installGate();
   await clickByText('開啟搶答');
   await waitHeld(1, '開啟後的快照請求');

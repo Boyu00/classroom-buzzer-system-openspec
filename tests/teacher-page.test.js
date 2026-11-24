@@ -289,7 +289,7 @@ test('寫回：describeExport 不把部分失敗、待核對或衝突說成成�
 
   const conflict = model.describeExport({ status: 'CONFLICT', items: [item('CONFLICT'), item('PENDING')] });
   assert.equal(conflict.tone, 'bad');
-  assert.match(conflict.advice, /沒有覆寫/);
+  assert.match(conflict.advice, /沒有寫入任何格/);
   assert.equal(model.describeExport(null), null);
   assert.deepEqual(model.exportCounts({ items: [item('SUCCEEDED'), item('FAILED'), item('FAILED')] }), { SUCCEEDED: 1, FAILED: 2 });
 });
