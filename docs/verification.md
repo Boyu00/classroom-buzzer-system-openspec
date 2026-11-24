@@ -83,3 +83,74 @@
 ## 2026-11-22 PR #34 review 與合併前整合
 
 Boyu00 正式 Approve：review-6011416078，對應 head f51a6f2；組員記錄 Node 24.22.3、87／87 與真實 Chrome 自動操作 17／17 通過（記憶體 fixture，不代表 Sheets 人工驗收）。本機整合 origin/main 72fbb3a（#32、#33）後解開套件衝突，npm ci --ignore-scripts 與 npm test 119／119 通過，openspec strict validation、git diff --check 通過。僅解依賴與更新文件，學生頁程式不變；非阻擋建議見 collaboration.md。
+
+## #20 整合驗證：1 位老師、10 組學生、20 題（2026-11-23）
+
+**測試**：`tests/integration-scale.test.js`，SPEED 與 FAIR 各一次。走真實 HTTP 與真實 SSE：老師與 10 組各開一條 SSE；題目以 B 的正式匯入流程（預覽→確認）匯入 20 題、15 個單位（10 個單題＋5 個兩題的題組）；前 5 個單位 10 組同時送出（競爭），其餘 10 個單位依輪替順序逐組送出，共 150 筆受理、200 個答案。
+
+**檢查項目**
+- 同步：開啟與結束都要在 2 秒內讓 11 條連線看到新階段；老師看到全部 150 筆。
+- 受理：全部送出成功；受理序號為 1..150 連續且不重複；同組重送同單位回傳原受理，不新增紀錄；結束後重送仍回傳原紀錄。
+- 隱私：OPEN 期間每組的 SSE 完整紀錄不含他組名稱與答案，也不含 acceptedOrder、rank、isWinner、joinCode、spreadsheetId、originalMarker 等欄位。
+- 排名：每單位 10 組都有紀錄、順位 1..10、恰一個勝出；順位與「獨立計算的期望結果」（只用結果中的受理序號，SPEED 依序號、FAIR 依此前勝出次數再依序號）逐單位相符；教師與學生看到的固定結果相同。
+- CSV：10 組 × 20 題 = 200 列加標頭、UTF-8 BOM、標頭欄位正確；學生下載被拒絕（403）。
+- 資料庫：submissions 150、submission_answers 200、results 150、勝出者 15。
+
+**結果**
+- 執行命令：`node --test tests/integration-scale.test.js`；連跑 5 次，每次 2／2 通過。
+- 其中一次的量測：SPEED 開啟同步 10 ms、結束同步 138 ms、150 筆送出 p95 113 ms、最慢 114 ms；FAIR 開啟同步 9 ms、結束同步 133 ms、送出 p95 103 ms、最慢 116 ms，公平模式 10 組都有得勝，各 1～2 次。
+- 全回歸：`npm test` 在 main（dc2c70b，含 #35 CSV）加本測試共 132／132 通過。
+- 測試強度：我故意破壞三處行為再跑，測試都會失敗：關掉公平排序（FAIR 的順位比對失敗）、讓學生看到所有組的受理（隱私檢查失敗）、讓重送不再回傳原受理（重送檢查失敗）；還原後全過。
+
+**環境與限制（如實說明）**
+- 本機單機，Windows。預設 PATH 的 Node 為 v26.13.1，不符合專案要求（`.node-version` 24.22.0、`engines` >=24.22.0 <25），所以上面的首次量測是在 v26.13.1 取得；之後改用 conda 環境 `node24` 的 Node **v24.22.3**（符合要求，`node:sqlite` 可用）重跑：`npm test` 132／132 通過，整合測試連跑 3 次每次 2／2 通過（SPEED 開啟同步 11～12 ms、結束同步約 147 ms；FAIR 開啟同步 9～14 ms、結束同步 170～555 ms、最慢一筆送出 202 ms，皆遠低於 2 秒）。結束同步偶爾較慢的那一次仍在要求內。
+- Google Sheets 是記憶體替身，不代表 AC-01／AC-03；老師頁與學生頁的畫面不在此測試範圍（有各自的瀏覽器 E2E）。
+- 10 組、150 筆受理屬課堂規模；沒有做更大的壓力測試。
+- tasks 9.1 還有「確認各功能都已隨實作提交測試」：#36（結果頁）、#37（教師頁）、#38（寫回）合併後需再跑一次全回歸並更新這裡，所以 9.1 先不勾選。
+
+## Node 24.22.3 全分支重測（2026-11-23）
+
+環境：Windows，conda 環境 `node24` 的 Node v24.22.3（符合 `engines` >=24.22.0 <25）、npm 11.19.1。先前多數結果是在預設 PATH 的 Node v26.13.1 取得，這裡全部以符合版本重跑。
+
+| 分支 | `npm test` | 瀏覽器 E2E（真實 Chrome） |
+| --- | --- | --- |
+| test/integration-10x20（main＋#20） | 132／132 | — |
+| feat/results-page（#36） | 137／137 | `e2e-results` 20／20 |
+| feat/teacher-console（#37） | 151／151 | `e2e-teacher` 39／39 |
+| feat/sheets-writeback（#38） | 154／154 | — |
+| feat/export-ui（#18 教師頁面板，未開 PR） | 157／157 | `e2e-teacher` 48／48 |
+| playtest（所有功能合併，僅本機試玩） | 175／175 | `e2e-teacher` 50／50、`e2e-results` 20／20 |
+
+**真實 Google Sheets**（feat/sheets-writeback，兩份測試副本，同樣在 Node 24.22.3）：單題表 25／25、題組表 22／22 通過，內容與 2026-11-22 的結果一致（RAW 純文字、其他內容與格式不變、重複寫回識別、改寫原格 → 409 停止）。驗收腳本不在 repository；跑完已還原測試副本的標記。
+
+限制：E2E 的 Sheets 仍是記憶體替身（真實 Sheets 只有上面那項後端流程驗收）；未涵蓋手機版面、螢幕閱讀器與其他瀏覽器。
+
+## 全功能合併後的全回歸（2026-11-24，tasks 9.1）
+
+基準：main 已含 #35（CSV）、#36（結果頁）、#37（教師頁）、#38（原格寫回），加本 PR 的整合測試。環境：Windows，Node v24.22.3（conda 環境 `node24`）。
+
+| 命令 | 結果 |
+| --- | --- |
+| `npm test` | 184／184 通過 |
+| `npm run e2e:teacher`（真實 Chrome） | 40／40 通過（含 #37 的快照順序情境；結果頁與 CSV 連結依端點存在而出現） |
+| `npm run e2e:results`（真實 Chrome） | 20／20 通過 |
+| `node --test tests/integration-scale.test.js` 連跑 3 次 | 每次 2／2 通過 |
+
+**各功能都已隨實作提交測試（對照）**
+
+| 功能 | 測試檔 |
+| --- | --- |
+| 專案基礎、資料層、migration | `server.test.js`、`storage.test.js` |
+| 身分、活動建立與狀態控制 | `auth.test.js`、`activities.test.js` |
+| 受理、題組、排名、結束、競態 | `submissions.test.js` |
+| SSE 同步、重連、隱私 | `events.test.js`、`activity-stream.test.js` |
+| 學生頁 | `student-page.test.js` |
+| Sheets gateway（讀取、寫入、錯誤對應） | `sheets-gateway.test.js` |
+| 標記解析、預覽、確認匯入 | `import-parser.test.js`、`import-service.test.js` |
+| 教師頁（含快照順序）、目前活動 API | `teacher-page.test.js`、`teacher-activity.test.js`、`e2e:teacher` |
+| 結果頁 | `results-page.test.js`、`e2e:results` |
+| CSV 匯出與公式防護 | `csv.test.js` |
+| 原格寫回（預覽、重驗、回讀、重試、衝突、互斥） | `writeback.test.js` |
+| 1 師／10 組／20 題整合 | `integration-scale.test.js` |
+
+**尚未完成**：#18 的教師頁寫回面板（PR #40）合併後需再跑一次全回歸並更新這裡，所以 tasks 9.1 先不勾選。Sheets 在自動測試與 E2E 中是記憶體替身；真實 Sheets 驗收見各功能文件與 #21。
