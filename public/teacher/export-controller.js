@@ -104,24 +104,26 @@ export function createExportController({ api, gate, onChange = () => {} } = {}) 
       return { ok: false, stale: true };
     }
     const stamp = (writeSeq += 1);
-    let result;
+    const live = () => gate.same(scope) && stamp === writeSeq;
+    const stale = { ok: false, stale: true };
+    let failure = null;
     try {
       const view = await api.post(`${base(scope.id)}/export/write`, { confirmedPaused: true });
-      if (gate.same(scope) && stamp === writeSeq) state.latest = view;
-      result = { ok: gate.same(scope) && stamp === writeSeq, stale: !(gate.same(scope) && stamp === writeSeq) };
+      if (live()) state.latest = view;
     } catch (error) {
-      if (!gate.same(scope) || stamp !== writeSeq) return { ok: false, stale: true };
+      if (!live()) return stale;
       // 失敗回應帶有逐題實況（衝突、待核對、部分失敗），一律保留，不可只留下錯誤訊息。
       if (error?.details?.items) state.latest = error.details;
-      throw error;
-    } finally {
-      if (gate.same(scope) && stamp === writeSeq) {
-        clearTransient();
-        emit();
-        await load().catch(() => {});
-      }
+      failure = error;
     }
-    return result;
+    if (!live()) return stale;
+    clearTransient();
+    emit();
+    await load().catch(() => {});
+    // 載入歷史期間可能已切換活動或登出：此時不可再回報成功或拋出舊活動的錯誤。
+    if (!live()) return stale;
+    if (failure) throw failure;
+    return { ok: true, stale: false };
   }
 
   return { state, reset, load, ensureLoaded, preview, setPaused, write };

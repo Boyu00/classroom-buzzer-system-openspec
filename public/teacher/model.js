@@ -88,7 +88,6 @@ export function resultUnits(snapshot) {
 export const EXPORT_STATUS_LABEL = {
   SUCCEEDED: '已寫入並核對', FAILED: '失敗（確認未寫入）', PENDING_VERIFICATION: '待核對（不確定是否已寫入）',
   CONFLICT: '衝突（已停止）', PENDING: '未執行', WRITING: '寫入中', PREVIEW: '預覽',
-  CARRIED: '先前已寫入（本次未重寫）',
 };
 export const PREVIEW_STATUS_LABEL = {
   WILL_WRITE: '將寫入', ALREADY_WRITTEN: '已寫入（先前已核對）', NO_WINNER: '無人作答，不變更', CONFLICT: '衝突',
@@ -127,32 +126,6 @@ export function sheetTitlesFrom(preview) {
     }
   }
   return titles;
-}
-
-/**
- * 標出「這一格在更早的匯出已經成功寫入」：伺服器遇到已寫入且內容相同的格不會再寫，只記成成功，
- * 所以單看狀態分不出「這次真的寫了」還是「先前就寫好了」。history 為新到舊，回傳同順序的副本，
- * 每個項目多一個 carried 旗標；原資料不變。
- */
-export function annotateCarried(history = []) {
-  const seen = new Set();
-  const out = [];
-  for (const entry of [...history].reverse()) {
-    const items = (entry.items ?? []).map((item) => ({ ...item, carried: item.status === 'SUCCEEDED' && seen.has(item.questionId) }));
-    for (const item of entry.items ?? []) if (item.status === 'SUCCEEDED') seen.add(item.questionId);
-    out.push({ ...entry, items });
-  }
-  return out.reverse();
-}
-
-/** 歷史列的格數摘要：把「已核對」拆成本次寫入與先前已寫入。 */
-export function summarizeCounts(entry) {
-  const counts = {};
-  for (const item of entry?.items ?? []) {
-    const key = item.status === 'SUCCEEDED' && item.carried ? 'CARRIED' : item.status;
-    counts[key] = (counts[key] ?? 0) + 1;
-  }
-  return Object.entries(counts).map(([status, n]) => `${EXPORT_STATUS_LABEL[status] ?? status} ${n}`).join('、') || '無需寫入';
 }
 
 export function exportCounts(view) {
@@ -199,13 +172,9 @@ export function describeExport(view) {
   const counts = exportCounts(view);
   const total = view.items?.length ?? 0;
   const done = counts.SUCCEEDED ?? 0;
-  const carried = (view.items ?? []).filter((item) => item.status === 'SUCCEEDED' && item.carried).length;
-  let headline;
-  if (view.status !== 'SUCCEEDED') headline = `${done} / ${total} 格已核對成功。`;
-  else if (!total) headline = '沒有需要寫入的答案。';
-  else if (carried === total) headline = `${total} 格先前都已寫入並核對，這次沒有再寫入任何格。`;
-  else if (carried > 0) headline = `全部 ${total} 格已核對：這次寫入 ${total - carried} 格，先前已寫入 ${carried} 格（未重寫）。`;
-  else headline = `全部 ${total} 格已寫入並回讀核對。`;
+  const headline = view.status === 'SUCCEEDED'
+    ? (total ? `全部 ${total} 格已寫入並回讀核對。` : '沒有需要寫入的答案。')
+    : `${done} / ${total} 格已核對成功。`;
   return { headline, tone: TONE[view.status] ?? 'warn', advice: adviceFor(view, counts), counts };
 }
 

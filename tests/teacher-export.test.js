@@ -277,34 +277,70 @@ t5('提示：全部確認未寫入才說沒有寫入；有待核對或寫後錯�
   assert.equal(model.describeExport(view('SUCCEEDED', [item('SUCCEEDED')])).advice, null);
 });
 
-/* ---------- 重複寫回：分得出「本次寫入」與「先前已寫入」，歷史紀錄顯示工作表名稱 ---------- */
+/* ---------- 複查 #40：寫回回覆抵達後、歷史載入期間才切換活動 ---------- */
+async function writeThenSwitchDuringHistory({ failWith }) {
+  const { fake, controller, switchTo } = setup();
+  switchTo('A');
+  const previewing = controller.preview();
+  fake.last().resolve(preview('A 的答案'));
+  await previewing;
+  controller.setPaused(true);
+  const writing = controller.write();
+  const request = fake.last();
+  assert.equal(request.path, '/api/activities/A/export/write');
+  if (failWith) request.reject(Object.assign(new Error('寫回失敗'), { details: view('CONFLICT', [item('CONFLICT', 'CELL_CHANGED')]) }));
+  else request.resolve(view('SUCCEEDED', [item('SUCCEEDED')]));
+  await flush();
+  const history = fake.last();
+  assert.equal(history.path, '/api/activities/A/exports', '寫回回覆到達後正在載入 A 的歷史');
+  switchTo('B'); // 歷史 GET 尚未完成就切換活動
+  history.resolve({ exports: [view('SUCCEEDED', [item('SUCCEEDED')])] });
+  return { controller, outcome: await writing.then((value) => ({ value }), (error) => ({ error })) };
+}
+
+t5('寫回成功後、歷史載入期間切換活動：回報 stale，不在新活動顯示成功', async () => {
+  const { controller, outcome } = await writeThenSwitchDuringHistory({ failWith: false });
+  assert.deepEqual(outcome.value, { ok: false, stale: true });
+  assert.equal(controller.state.latest, null, 'B 的畫面不得出現 A 的寫回結果');
+  assert.deepEqual(controller.state.history, []);
+});
+
+t5('寫回失敗後、歷史載入期間切換活動：不拋出 A 的錯誤，回報 stale', async () => {
+  const { controller, outcome } = await writeThenSwitchDuringHistory({ failWith: true });
+  assert.equal(outcome.error, undefined, '不可把 A 的錯誤顯示在 B');
+  assert.deepEqual(outcome.value, { ok: false, stale: true });
+  assert.equal(controller.state.latest, null);
+});
+
+t5('寫回失敗且活動未切換：仍拋出錯誤並保留逐題實況（行為不變）', async () => {
+  const { fake, controller, switchTo } = setup();
+  switchTo('A');
+  const previewing = controller.preview();
+  fake.last().resolve(preview('x'));
+  await previewing;
+  controller.setPaused(true);
+  const writing = controller.write();
+  fake.last().reject(Object.assign(new Error('寫回失敗'), { details: view('CONFLICT', [item('CONFLICT', 'CELL_CHANGED')]) }));
+  await flush();
+  fake.last().resolve({ exports: [] });
+  await assert.rejects(writing, /寫回失敗/);
+  assert.equal(controller.state.latest.status, 'CONFLICT');
+});
+
+/* ---------- 複查 #40：不從過往成功推斷「本次沒有重寫」 ---------- */
 const exp = (id, status, items) => ({ exportId: id, status, createdAt: '2026-11-25T10:00:00Z', items });
 const it = (questionId, status = 'SUCCEEDED') => ({ questionId, status, target: { sheetId: 7, rowIndex: 4, columnIndex: 6 } });
 
-t5('標出先前已成功寫入的格：失敗那次不算，第二次是新寫入，第三次全是先前已寫入', () => {
-  const history = [ // 新到舊
-    exp('c', 'SUCCEEDED', [it('3'), it('7a')]),
-    exp('b', 'SUCCEEDED', [it('3'), it('7a')]),
-    exp('a', 'FAILED', [it('3', 'FAILED'), it('7a', 'FAILED')]),
-  ];
-  const marked = model.annotateCarried(history);
-  assert.deepEqual(marked.map((e) => e.items.map((i) => i.carried)), [[true, true], [false, false], [false, false]]);
-  assert.equal(history[0].items[0].carried, undefined, '不修改原資料');
-  assert.equal(model.summarizeCounts(marked[0]), '先前已寫入（本次未重寫） 2');
-  assert.equal(model.summarizeCounts(marked[1]), '已寫入並核對 2');
-  assert.equal(model.summarizeCounts(marked[2]), '失敗（確認未寫入） 2');
-  assert.match(model.describeExport(marked[0]).headline, /先前都已寫入並核對，這次沒有再寫入任何格/);
-  assert.match(model.describeExport(marked[1]).headline, /全部 2 格已寫入並回讀核對/);
+t5('文案只描述已核對的事實：有較早成功紀錄時，不宣稱「這次沒有再寫入」', () => {
+  // 例：第一次成功 → 原格被恢復成標記 → 再寫回成功（實際又寫了一次）；或較早只有待核對。前端無法分辨，不得推論。
+  const second = exp('b', 'SUCCEEDED', [it('3'), it('7a')]);
+  const headline = model.describeExport(second).headline;
+  assert.match(headline, /全部 2 格已寫入並回讀核對/);
+  assert.doesNotMatch(headline, /沒有再寫入|未重寫|先前已寫入/);
+  assert.equal(model.annotateCarried, undefined, '前端不再推論 carried');
 });
 
-t5('部分是新寫入、部分先前已寫入時，兩種數量都說清楚', () => {
-  const marked = model.annotateCarried([exp('b', 'SUCCEEDED', [it('3'), it('7a')]), exp('a', 'SUCCEEDED', [it('3')])]);
-  assert.match(model.describeExport(marked[0]).headline, /這次寫入 1 格，先前已寫入 1 格/);
-  const text = model.summarizeCounts(marked[0]);
-  assert.match(text, /已寫入並核對 1/);
-  assert.match(text, /先前已寫入（本次未重寫） 1/);
-});
-
+/* ---------- 工作表名稱（只影響顯示） ---------- */
 t5('沒有工作表名稱時顯示 ID；預覽學到名稱後，歷史紀錄的目標格改顯示名稱', () => {
   const target = { sheetId: 7, rowIndex: 4, columnIndex: 6 };
   assert.equal(model.cellLabel(target), '工作表 7！G5');
@@ -314,15 +350,12 @@ t5('沒有工作表名稱時顯示 ID；預覽學到名稱後，歷史紀錄的�
 });
 
 t5('控制器：預覽後記住工作表名稱，切換活動時清除', async () => {
-  const gate = createSnapshotGate();
-  gate.attach('A');
-  const api = {
-    get: async () => ({ exports: [] }),
-    post: async () => ({ canWrite: true, units: [{ questions: [{ target: { sheetId: 7, rowIndex: 4, columnIndex: 6, location: '學習單!G5' } }] }] }),
-  };
-  const controller = createExportController({ api, gate });
-  await controller.preview();
+  const { fake, controller, switchTo } = setup();
+  switchTo('A');
+  const previewing = controller.preview();
+  fake.last().resolve({ canWrite: true, units: [{ questions: [{ target: { sheetId: 7, rowIndex: 4, columnIndex: 6, location: '學習單!G5' } }] }] });
+  await previewing;
   assert.deepEqual(controller.state.sheetTitles, { 7: '學習單' });
-  controller.reset();
+  switchTo('B');
   assert.deepEqual(controller.state.sheetTitles, {});
 });

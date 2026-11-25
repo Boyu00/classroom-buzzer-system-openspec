@@ -450,7 +450,7 @@ function exportItemsTable(items, caption, titles) {
     el('tbody', {}, items.map((item) => el('tr', {},
       el('th', { scope: 'row' }, item.questionId),
       el('td', {}, model.cellLabel(item.target, titles)),
-      el('td', {}, statusBadge(item.status === 'SUCCEEDED' && item.carried ? 'CARRIED' : item.status)),
+      el('td', {}, statusBadge(item.status)),
       el('td', {}, item.message ?? (item.errorCode ? `錯誤代碼：${item.errorCode}` : ''))))));
 }
 
@@ -487,9 +487,7 @@ function renderExportPreview(preview) {
 
 function renderExport() {
   if (!refs.export) return;
-  const { preview, latest, confirmedPaused, sheetTitles } = exportCtl.state;
-  const history = model.annotateCarried(exportCtl.state.history);
-  const latestView = history.find((entry) => entry.exportId === latest?.exportId) ?? latest;
+  const { preview, latest, history, confirmedPaused, sheetTitles } = exportCtl.state;
   const previewBtn = button('預覽寫回', {}, (event) => run(event.currentTarget, () => exportCtl.preview()));
   const paused = el('input', {
     id: 'export-paused', type: 'checkbox', checked: confirmedPaused,
@@ -514,7 +512,7 @@ function renderExport() {
         : '預覽有衝突，無法寫回。'),
       el('div', { class: 'actions' }, writeBtn))
       : (latest && latest.status !== 'SUCCEEDED' ? el('p', { class: 'hint' }, '上次寫回未完成。請先重新預覽，確認後可重試。') : null),
-    renderExportResult(latestView, sheetTitles),
+    renderExportResult(latest, sheetTitles),
     history.length > 1 ? el('details', {},
       el('summary', {}, `匯出紀錄（共 ${history.length} 次）`),
       el('table', {},
@@ -523,7 +521,7 @@ function renderExport() {
         el('tbody', {}, history.map((entry) => el('tr', {},
           el('td', {}, new Date(entry.createdAt).toLocaleString('zh-TW')),
           el('td', {}, statusBadge(entry.status)),
-          el('td', {}, model.summarizeCounts(entry))))))) : null);
+          el('td', {}, Object.entries(model.exportCounts(entry)).map(([status, n]) => `${EXPORT_LABELS[status] ?? status} ${n}`).join('、') || '無需寫入')))))) : null);
 }
 
 start();
