@@ -133,7 +133,7 @@ Boyu00 正式 Approve：review-6011416078，對應 head f51a6f2；組員記錄 N
 | --- | --- |
 | `npm test` | 184／184 通過 |
 | `npm run e2e:teacher`（真實 Chrome） | 40／40 通過（含 #37 的快照順序情境；結果頁與 CSV 連結依端點存在而出現） |
-| `npm run e2e:results`（真實 Chrome） | 20／20 通過 |
+| `node scripts/e2e-results.mjs`（真實 Chrome；沒有對應的 npm script） | 20／20 通過 |
 | `node --test tests/integration-scale.test.js` 連跑 3 次 | 每次 2／2 通過 |
 
 **各功能都已隨實作提交測試（對照）**
@@ -148,9 +148,29 @@ Boyu00 正式 Approve：review-6011416078，對應 head f51a6f2；組員記錄 N
 | Sheets gateway（讀取、寫入、錯誤對應） | `sheets-gateway.test.js` |
 | 標記解析、預覽、確認匯入 | `import-parser.test.js`、`import-service.test.js` |
 | 教師頁（含快照順序）、目前活動 API | `teacher-page.test.js`、`teacher-activity.test.js`、`e2e:teacher` |
-| 結果頁 | `results-page.test.js`、`e2e:results` |
+| 結果頁 | `results-page.test.js`、`scripts/e2e-results.mjs` |
 | CSV 匯出與公式防護 | `csv.test.js` |
 | 原格寫回（預覽、重驗、回讀、重試、衝突、互斥） | `writeback.test.js` |
 | 1 師／10 組／20 題整合 | `integration-scale.test.js` |
 
 **尚未完成**：#18 的教師頁寫回面板（PR #40）合併後需再跑一次全回歸並更新這裡，所以 tasks 9.1 先不勾選。Sheets 在自動測試與 E2E 中是記憶體替身；真實 Sheets 驗收見各功能文件與 #21。
+
+## #40 合併後的全回歸（2026-11-25，tasks 9.1）
+
+基準：main 3642391，已含全部功能與 #40（教師頁寫回面板）。環境：Windows，Node v24.22.3（conda 環境 `node24`）。
+
+| 命令 | 結果 |
+| --- | --- |
+| `npm test` | 209／209 通過 |
+| `npm run e2e:teacher`（真實 Chrome；Google 為替身） | 58／58 通過（含寫回面板與 #37 的快照順序情境） |
+| `node scripts/e2e-results.mjs`（真實 Chrome；沒有對應的 npm script） | 20／20 通過 |
+
+**這些自動測試不代表人工驗收**。2026-11-25 在真實瀏覽器與真實 Google Sheets 上的人工驗收（含各項目的環境、步驟、結果與限制）記在 acceptance-checklist.md 第四節（位於 [PR #41](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/41)，**尚未合併**；合併前請以該 PR 的文件為準）：
+- 人工驗證通過：AC-01～05、07～09、11、12、14～17、19～24。
+- 部分通過：AC-13（人工 3 種，其餘 5 種為真實表腳本驗證，見 [writeback.md](writeback.md)）。
+- API 層級腳本驗證（非瀏覽器人工操作）：AC-18、AC-04 的「開啟後新組加入被拒」。
+- 以自動測試為準：AC-06、AC-10（並行競態，人工無法穩定製造）。
+
+**tasks 勾選依據**：6.1、6.7（AC-01～AC-03、AC-17 真實證據）、7.2、7.3（AC-12、AC-13、AC-17）、7.4（AC-14）、7.5 的真實 Sheets 證據都已在上述紀錄中；9.1 為本節的全回歸。**9.2 不勾選**：AC-13 只有部分人工驗證，AC-06、AC-10 未人工驗，依「未測不標通過」維持未完成。
+
+已知限制：匯出紀錄無法區分某次寫回是真的寫入或確認先前已寫入（PR #40 複查後移除了前端的推論）。
