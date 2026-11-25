@@ -276,3 +276,53 @@ t5('提示：全部確認未寫入才說沒有寫入；有待核對或寫後錯�
   assert.doesNotMatch(pending.advice, NO_CHANGE_CLAIMS);
   assert.equal(model.describeExport(view('SUCCEEDED', [item('SUCCEEDED')])).advice, null);
 });
+
+/* ---------- 重複寫回：分得出「本次寫入」與「先前已寫入」，歷史紀錄顯示工作表名稱 ---------- */
+const exp = (id, status, items) => ({ exportId: id, status, createdAt: '2026-11-25T10:00:00Z', items });
+const it = (questionId, status = 'SUCCEEDED') => ({ questionId, status, target: { sheetId: 7, rowIndex: 4, columnIndex: 6 } });
+
+t5('標出先前已成功寫入的格：失敗那次不算，第二次是新寫入，第三次全是先前已寫入', () => {
+  const history = [ // 新到舊
+    exp('c', 'SUCCEEDED', [it('3'), it('7a')]),
+    exp('b', 'SUCCEEDED', [it('3'), it('7a')]),
+    exp('a', 'FAILED', [it('3', 'FAILED'), it('7a', 'FAILED')]),
+  ];
+  const marked = model.annotateCarried(history);
+  assert.deepEqual(marked.map((e) => e.items.map((i) => i.carried)), [[true, true], [false, false], [false, false]]);
+  assert.equal(history[0].items[0].carried, undefined, '不修改原資料');
+  assert.equal(model.summarizeCounts(marked[0]), '先前已寫入（本次未重寫） 2');
+  assert.equal(model.summarizeCounts(marked[1]), '已寫入並核對 2');
+  assert.equal(model.summarizeCounts(marked[2]), '失敗（確認未寫入） 2');
+  assert.match(model.describeExport(marked[0]).headline, /先前都已寫入並核對，這次沒有再寫入任何格/);
+  assert.match(model.describeExport(marked[1]).headline, /全部 2 格已寫入並回讀核對/);
+});
+
+t5('部分是新寫入、部分先前已寫入時，兩種數量都說清楚', () => {
+  const marked = model.annotateCarried([exp('b', 'SUCCEEDED', [it('3'), it('7a')]), exp('a', 'SUCCEEDED', [it('3')])]);
+  assert.match(model.describeExport(marked[0]).headline, /這次寫入 1 格，先前已寫入 1 格/);
+  const text = model.summarizeCounts(marked[0]);
+  assert.match(text, /已寫入並核對 1/);
+  assert.match(text, /先前已寫入（本次未重寫） 1/);
+});
+
+t5('沒有工作表名稱時顯示 ID；預覽學到名稱後，歷史紀錄的目標格改顯示名稱', () => {
+  const target = { sheetId: 7, rowIndex: 4, columnIndex: 6 };
+  assert.equal(model.cellLabel(target), '工作表 7！G5');
+  const titles = model.sheetTitlesFrom({ units: [{ questions: [{ target: { sheetId: 7, rowIndex: 4, columnIndex: 6, location: '學習單!G5' } }] }] });
+  assert.deepEqual(titles, { 7: '學習單' });
+  assert.equal(model.cellLabel(target, titles), '學習單!G5');
+});
+
+t5('控制器：預覽後記住工作表名稱，切換活動時清除', async () => {
+  const gate = createSnapshotGate();
+  gate.attach('A');
+  const api = {
+    get: async () => ({ exports: [] }),
+    post: async () => ({ canWrite: true, units: [{ questions: [{ target: { sheetId: 7, rowIndex: 4, columnIndex: 6, location: '學習單!G5' } }] }] }),
+  };
+  const controller = createExportController({ api, gate });
+  await controller.preview();
+  assert.deepEqual(controller.state.sheetTitles, { 7: '學習單' });
+  controller.reset();
+  assert.deepEqual(controller.state.sheetTitles, {});
+});

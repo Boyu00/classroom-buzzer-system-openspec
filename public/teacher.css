@@ -99,6 +99,7 @@ a:focus-visible { outline: 3px solid #1b6ec2; outline-offset: 3px; }
 .export-result.bad { border-color: #b3261e; background: #fdecea; }
 .hint.bad { color: #5c1410; font-weight: 600; }
 .badge.status-succeeded { background: #cfe9d6; }
+.badge.status-carried { background: #e3ece6; }
 .badge.status-failed, .badge.status-conflict { background: #f6cfca; }
 .badge.status-pending_verification, .badge.status-writing { background: #ffe7a8; }
 details > summary { cursor: pointer; margin-top: 16px; }

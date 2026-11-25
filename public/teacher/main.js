@@ -443,25 +443,25 @@ const EXPORT_LABELS = model.EXPORT_STATUS_LABEL;
 
 const statusBadge = (status) => el('span', { class: `badge status-${status.toLowerCase()}` }, EXPORT_LABELS[status] ?? status);
 
-function exportItemsTable(items, caption) {
+function exportItemsTable(items, caption, titles) {
   return el('table', { class: 'export-table' },
     el('caption', {}, caption),
     el('thead', {}, el('tr', {}, ['題號', '目標格', '狀態', '說明'].map((h) => el('th', { scope: 'col' }, h)))),
     el('tbody', {}, items.map((item) => el('tr', {},
       el('th', { scope: 'row' }, item.questionId),
-      el('td', {}, model.cellLabel(item.target)),
-      el('td', {}, statusBadge(item.status)),
+      el('td', {}, model.cellLabel(item.target, titles)),
+      el('td', {}, statusBadge(item.status === 'SUCCEEDED' && item.carried ? 'CARRIED' : item.status)),
       el('td', {}, item.message ?? (item.errorCode ? `錯誤代碼：${item.errorCode}` : ''))))));
 }
 
-function renderExportResult(view) {
+function renderExportResult(view, titles) {
   const info = model.describeExport(view);
   if (!info) return null;
   return el('div', { class: `export-result ${info.tone}`, role: 'status' },
     el('h3', {}, '最近一次寫回'),
     el('p', {}, statusBadge(view.status), ' ', info.headline),
     info.advice ? el('p', { class: 'hint' }, info.advice) : null,
-    view.items.length ? exportItemsTable(view.items, '逐題寫回實況') : null);
+    view.items.length ? exportItemsTable(view.items, '逐題寫回實況', titles) : null);
 }
 
 function renderExportPreview(preview) {
@@ -487,7 +487,9 @@ function renderExportPreview(preview) {
 
 function renderExport() {
   if (!refs.export) return;
-  const { preview, latest, history, confirmedPaused } = exportCtl.state;
+  const { preview, latest, confirmedPaused, sheetTitles } = exportCtl.state;
+  const history = model.annotateCarried(exportCtl.state.history);
+  const latestView = history.find((entry) => entry.exportId === latest?.exportId) ?? latest;
   const previewBtn = button('預覽寫回', {}, (event) => run(event.currentTarget, () => exportCtl.preview()));
   const paused = el('input', {
     id: 'export-paused', type: 'checkbox', checked: confirmedPaused,
@@ -512,7 +514,7 @@ function renderExport() {
         : '預覽有衝突，無法寫回。'),
       el('div', { class: 'actions' }, writeBtn))
       : (latest && latest.status !== 'SUCCEEDED' ? el('p', { class: 'hint' }, '上次寫回未完成。請先重新預覽，確認後可重試。') : null),
-    renderExportResult(latest),
+    renderExportResult(latestView, sheetTitles),
     history.length > 1 ? el('details', {},
       el('summary', {}, `匯出紀錄（共 ${history.length} 次）`),
       el('table', {},
@@ -521,7 +523,7 @@ function renderExport() {
         el('tbody', {}, history.map((entry) => el('tr', {},
           el('td', {}, new Date(entry.createdAt).toLocaleString('zh-TW')),
           el('td', {}, statusBadge(entry.status)),
-          el('td', {}, Object.entries(model.exportCounts(entry)).map(([status, n]) => `${EXPORT_LABELS[status] ?? status} ${n}`).join('、') || '無需寫入')))))) : null);
+          el('td', {}, model.summarizeCounts(entry))))))) : null);
 }
 
 start();

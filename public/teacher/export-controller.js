@@ -7,8 +7,10 @@
 // - 寫回必須使用「預覽當下」的活動：預覽綁定 previewScope，寫回前確認仍在同一個活動與世代，否則不送出。
 // - 切換活動或登出時 reset()：清除預覽、暫停編輯確認、歷史與最近結果。
 
+import { sheetTitlesFrom } from './model.js';
+
 export function createExportController({ api, gate, onChange = () => {} } = {}) {
-  const state = { preview: null, previewScope: null, latest: null, history: [], confirmedPaused: false, loadedFor: null };
+  const state = { preview: null, previewScope: null, latest: null, history: [], confirmedPaused: false, loadedFor: null, sheetTitles: {} };
   let previewSeq = 0;
   let writeSeq = 0;
   let loadSeq = 0;
@@ -30,6 +32,7 @@ export function createExportController({ api, gate, onChange = () => {} } = {}) 
     state.latest = null;
     state.history = [];
     state.loadedFor = null;
+    state.sheetTitles = {};
     emit();
   }
 
@@ -78,6 +81,7 @@ export function createExportController({ api, gate, onChange = () => {} } = {}) 
     if (!gate.same(scope) || stamp !== previewSeq) return null;
     state.preview = data;
     state.previewScope = scope;
+    state.sheetTitles = { ...state.sheetTitles, ...sheetTitlesFrom(data) };
     emit();
     return data;
   }
