@@ -2,7 +2,7 @@
 
 以 Google Sheets Guided Notes 為題目來源的課堂搶答系統，支援老師、學生組別、單題／題組、速度／公平模式、線上原格寫回及 CSV。
 
-**目前狀態：** 功能（教師頁、學生頁、結果頁、Sheets 匯入、原格寫回、CSV）都已實作，並已在真實 Google Sheets 上完成人工驗收；#40（教師頁寫回面板）、#41（驗收清單）、#42（全回歸與 tasks 勾選）都已合併。哪些驗收項目是人工做的、哪些只有自動測試，逐項記在 [驗收清單與紀錄](docs/acceptance-checklist.md) 第四節，**不把自動化結果當成人工驗收**。
+**目前狀態：** 功能（教師頁、學生頁、結果頁、Sheets 匯入、原格寫回、CSV）都已實作，並已在真實 Google Sheets 上進行人工驗收與腳本驗證，**部分項目仍待補測**（tasks 9.2 未勾選）；#40（教師頁寫回面板）、#41（驗收清單）、#42（全回歸與 tasks 勾選）都已合併。哪些驗收項目是人工做的、哪些只有自動測試，逐項記在 [驗收清單與紀錄](docs/acceptance-checklist.md) 第四節，**不把自動化結果當成人工驗收**。
 
 - [完整產品規格](spec.md)：產品需求保留原第一版內容，開發方法改用 OpenSpec。
 - [提案](openspec/changes/build-classroom-buzzer/proposal.md)：目的與能力範圍。
@@ -159,5 +159,7 @@ openspec validate build-classroom-buzzer --strict
 
 ## 下一步
 
-1. 共同：OpenSpec verify／sync／archive（#22）、Demo 影片（#24）、表單繳交（#25）。
-3. 本機變更不會自動上傳 GitHub：需依序 commit、push 分支、建立 PR，再由另一人 review 後合併 main；其他人的變更也需 fetch／pull 才會出現在本機。
+1. 剩餘驗收：AC-13 其餘 5 種結構變動的人工操作、AC-18 的瀏覽器人工版；AC-06、AC-10 以自動測試為準是否可接受，需兩人確認後才能勾選 tasks 9.2（#21）。
+2. 交付前置：兩人各自的 AI 對話整理（移除機密）與個人心得、Demo 影片（#24），再透過表單繳交（#25，期限 2026-11-30 00:00）。
+3. OpenSpec：以上任務條件都完成後，再做完整 Verify、Sync、Archive（#22）；半成品不歸檔。
+4. 本機變更不會自動上傳 GitHub：需依序 commit、push 分支、建立 PR，再由另一人 review 後合併 main；其他人的變更也需 fetch／pull 才會出現在本機。
