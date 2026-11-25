@@ -9,6 +9,7 @@ import { join } from 'node:path';
 import { startServer } from '../src/server.js';
 import { removeTestDirectory } from '../tests/helpers.js';
 import { httpClient } from '../tests/http-helpers.js';
+import { HttpError } from '../src/http-error.js';
 
 const shotsDir = process.argv.includes('--shots') ? process.argv[process.argv.indexOf('--shots') + 1] : null;
 const CHROME = [process.env.CHROME_PATH, 'C:/Program Files/Google/Chrome/Application/chrome.exe',
@@ -21,6 +22,8 @@ const XSS = '<img src=x onerror="window.__xss=1"><script>window.__xss=2</script>
 const SHEET_ID = 's'.repeat(44);
 
 // 記憶體 Sheets 替身：兩張工作表，共 4 題、3 個單位（單題 1、題組 X 跨兩表、單題 4）。
+// 成功提示不得出現（空字串即為隱藏）。
+const document_noSuccess = (noticeText) => !noticeText.includes('已全部寫入');
 function blank() { return Array.from({ length: 12 }, () => Array(6).fill('')); }
 const sheetData = {
   0: { title: '第一頁', cells: (() => { const c = blank(); c[2][1] = '{{Q:1}}'; c[5][1] = '{{Q:2|G:X}}'; return c; })() },
@@ -31,8 +34,19 @@ const gateway = {
   async listSheets() {
     return { spreadsheetId: SHEET_ID, title: '示範試算表', sheets: Object.entries(sheetData).map(([id, s], index) => ({ sheetId: Number(id), title: s.title, index })) };
   },
+  mode: 'ok', readsDown: false, writes: [],
   async readSheets({ sheetIds }) {
-    return sheetIds.map((id) => ({ spreadsheetId: SHEET_ID, sheetId: id, title: sheetData[id].title, rowCount: 12, columnCount: 6, cells: sheetData[id].cells, merges: [] }));
+    if (this.readsDown) throw new HttpError(502, 'SHEETS_UNAVAILABLE', '逾時');
+    return sheetIds.map((id) => ({ spreadsheetId: SHEET_ID, sheetId: id, title: sheetData[id].title, rowCount: 12, columnCount: 6, cells: structuredClone(sheetData[id].cells), merges: [] }));
+  },
+  // 有狀態的寫入替身：真的改格子，並可模擬逾時（已套用／未套用）與讀取中斷。
+  async writeCells({ cells }) {
+    this.writes.push(cells.length);
+    const apply = () => { for (const c of cells) sheetData[c.sheetId].cells[c.rowIndex][c.columnIndex] = c.value; };
+    if (this.mode === 'timeoutNoApply') throw new HttpError(502, 'SHEETS_UNAVAILABLE', '逾時');
+    if (this.mode === 'timeoutAfterApplyBlind') { apply(); this.readsDown = true; throw new HttpError(502, 'SHEETS_UNAVAILABLE', '逾時'); }
+    apply();
+    return { updatedCells: cells.length };
   },
 };
 
@@ -233,6 +247,71 @@ async function main() {
     const csv = await evaluate(`(async () => { const r = await fetch('/api/activities/${available.id}/results.csv'); const b = new Uint8Array(await r.arrayBuffer()); return { status: r.status, bom: b[0] === 0xEF && b[1] === 0xBB && b[2] === 0xBF, text: new TextDecoder().decode(b) }; })()`);
     check('CSV 可下載，含 BOM、題號與學生答案', csv.status === 200 && csv.bom && csv.text.includes('activity_id') && csv.text.includes('乙組答案'), JSON.stringify(csv).slice(0, 200));
   }
+
+  // ===== 寫回原 Google Sheets（#17／#18）：失敗、待核對、重試成功、衝突都要在畫面如實呈現 =====
+  await waitFor("!document.querySelector('#export-title').closest('section').hidden", '寫回面板');
+  check('結束後顯示寫回面板', true);
+  const exportText = () => text('section:has(#export-title)');
+  const openPreview = async () => { await clickByText('預覽寫回'); await waitFor("document.querySelector('section:has(#export-title) .preview-box')", '寫回預覽'); };
+  const writeButton = () => evaluate("(() => { const b = document.querySelector('#export-write'); return b ? { disabled: b.disabled, label: b.textContent } : null; })()");
+
+  await openPreview();
+  let panel = await exportText();
+  check('寫回預覽列出勝出組、答案、目標格與無人作答', panel.includes('勝出：甲組') && panel.includes('勝出：乙組') && panel.includes('無人作答') && panel.includes('乙組答案 2') && panel.includes('第二頁!C2'), panel);
+  check('寫回預覽：惡意字串以純文字顯示且未執行', panel.includes('<img src=x') && (await evaluate('window.__xss === undefined && document.querySelectorAll("section:has(#export-title) img, section:has(#export-title) script").length === 0')));
+  check('寫回預覽：未勾選確認前，寫回按鈕停用', (await writeButton()).disabled === true);
+  await shot('07-export-preview');
+  await evaluate("document.querySelector('#export-paused').click()");
+  check('勾選「已暫停其他人編輯」後才啟用寫回', (await writeButton()).disabled === false);
+
+  // (a) 寫入逾時且確實未套用 → 失敗（不是成功），內容沒變，可重試
+  gateway.mode = 'timeoutNoApply';
+  await click('#export-write');
+  await waitFor("!document.querySelector('#alert').hidden", '寫回失敗提示');
+  await waitFor("document.querySelector('section:has(#export-title) .export-result')", '寫回結果');
+  panel = await exportText();
+  check('寫入逾時未套用：顯示失敗，不顯示成功', panel.includes('失敗（確認未寫入）') && document_noSuccess(await text('#notice')), panel);
+  check('失敗時原格內容沒有改變', sheetData[5].cells[1][2] === '{{Q:3|G:X}}' && sheetData[5].cells[4][2] === '{{Q:4}}');
+  await openPreview();
+  check('失敗後按鈕改為「重試寫回」', (await writeButton()).label === '重試寫回', JSON.stringify(await writeButton()));
+  await shot('08-export-failed');
+
+  // (b) 寫入逾時且之後也讀不回來 → 待核對（既不是成功也不是失敗）
+  await evaluate("document.querySelector('#export-paused').click()");
+  gateway.mode = 'timeoutAfterApplyBlind';
+  await click('#export-write');
+  await waitFor("document.querySelector('section:has(#export-title) .export-result')?.innerText.includes('待核對')", '待核對結果');
+  panel = await exportText();
+  check('逾時且無法回讀：顯示待核對與重試說明', panel.includes('待核對') && panel.includes('重試寫回') && !panel.includes('全部 3 格已寫入'), panel);
+  await shot('09-export-pending');
+
+  // (c) 讀取恢復後重試：先回讀，已寫入者不重複寫入，確認後才顯示成功
+  gateway.readsDown = false;
+  gateway.mode = 'ok';
+  const writesBefore = gateway.writes.length;
+  await openPreview();
+  panel = await exportText();
+  check('重試預覽：先前待核對且線上內容相符者顯示為已寫入', (panel.match(/已寫入（先前已核對）/g) ?? []).length === 3, panel);
+  await evaluate("document.querySelector('#export-paused').click()");
+  await click('#export-write');
+  await waitFor("!document.querySelector('#notice').hidden", '重試成功提示');
+  await waitFor("document.querySelector('section:has(#export-title) .export-result')?.innerText.includes('全部 3 格已寫入並回讀核對')", '重試成功結果');
+  check('重試成功：不重複寫入，結果為全部核對', gateway.writes.length === writesBefore);
+  check('原格內容已是勝出答案（含 HTML 字串原文，以文字保存）', Object.values(sheetData).some((sh) => sh.cells.flat().includes(XSS)) && sheetData[5].cells[1][2].startsWith('乙組答案'), JSON.stringify(sheetData[5].cells[1]));
+  panel = await exportText();
+  check('匯出紀錄列出歷次寫回', panel.includes('匯出紀錄（共 3 次）'), panel);
+  await shot('10-export-success');
+
+  // (d) 老師手動改了原格 → 預覽即顯示衝突，不能寫回
+  sheetData[5].cells[1][2] = '老師手動改過';
+  const writesAfter = gateway.writes.length;
+  await openPreview();
+  await evaluate("document.querySelector('#export-paused').click()");
+  panel = await exportText();
+  check('原格被改：預覽顯示衝突與處理方式', panel.includes('衝突') && panel.includes('重新匯入'), panel);
+  check('原格被改：寫回按鈕維持停用，不寫入', (await writeButton()).disabled === true && gateway.writes.length === writesAfter);
+  check('寫回面板沒有殘留的 null 或 [object …] 文字', !/null|\[object/.test(panel), panel);
+  await shot('11-export-conflict');
   await shot('06-closed');
 
   // 8. 登出、錯誤密碼、重新登入
@@ -280,8 +359,19 @@ async function main() {
     return { id, code: await text('.code'), previous };
   };
 
+  // review #40：寫回面板的預覽、確認與結果必須跟著活動走，切換活動後不得殘留（接線檢查；控制器本身有單元測試）。
+  await clickByText('預覽寫回');
+  await waitFor("document.querySelector('section:has(#export-title) .preview-box')", '切換前的寫回預覽');
+  await evaluate("document.querySelector('#export-paused').click()");
+  check('切換前：面板有預覽且已勾選暫停確認', (await text('section:has(#export-title)')).includes('寫回預覽') && await evaluate("document.querySelector('#export-paused').checked"));
+  const exportPanelText = () => evaluate("document.querySelector('section:has(#export-title)').textContent");
+  const beforeSwitch = await newActivity();
+  const leftover = await exportPanelText();
+  check('review #40：切換到新活動後，舊活動的預覽、答案與確認不殘留', !leftover.includes('寫回預覽') && !leftover.includes('勝出：') && !(await evaluate("Boolean(document.querySelector('#export-write') || document.querySelector('#export-paused'))")), leftover.slice(0, 200));
+  void beforeSwitch;
+
   // 情境 1：舊的 OPEN HTTP 回應在 CLOSED SSE 之後才抵達
-  const first = await newActivity();
+  const first = beforeSwitch;
   await installGate();
   await clickByText('開啟搶答');
   await waitHeld(1, '開啟後的快照請求');

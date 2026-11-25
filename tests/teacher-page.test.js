@@ -263,3 +263,45 @@ test('閘門：同階段較新的 SSE 內容不會被延遲抵達的 HTTP 回應
   assert.equal(gate.fetched(ticket, snap('a', 'OPEN', { groups: 2 })), false);
   assert.equal(gate.snapshot.groups, 3);
 });
+
+test('寫回：目標格顯示（有名稱用名稱，否則以工作表 ID 與 A1，跨 26 欄正確）', () => {
+  assert.equal(model.cellLabel({ location: '第二頁!C2' }), '第二頁!C2');
+  assert.equal(model.cellLabel({ sheetId: 7, rowIndex: 4, columnIndex: 6 }), '工作表 7！G5');
+  assert.equal(model.cellLabel({ sheetId: 0, rowIndex: 0, columnIndex: 26 }), '工作表 0！AA1');
+  assert.equal(model.cellLabel(undefined), '');
+});
+
+test('寫回：describeExport 不把部分失敗、待核對或衝突說成成功', () => {
+  const item = (status) => ({ questionId: 'q', status });
+  const ok = model.describeExport({ status: 'SUCCEEDED', items: [item('SUCCEEDED'), item('SUCCEEDED')] });
+  assert.deepEqual([ok.tone, ok.advice], ['ok', null]);
+  assert.match(ok.headline, /全部 2 格已寫入並回讀核對/);
+  assert.match(model.describeExport({ status: 'SUCCEEDED', items: [] }).headline, /沒有需要寫入/);
+
+  const partial = model.describeExport({ status: 'FAILED', items: [item('SUCCEEDED'), item('FAILED')] });
+  assert.equal(partial.tone, 'bad');
+  assert.match(partial.headline, /1 \/ 2 格已核對成功/);
+  assert.doesNotMatch(partial.headline, /全部/);
+
+  const pending = model.describeExport({ status: 'PENDING_VERIFICATION', items: [item('PENDING_VERIFICATION')] });
+  assert.equal(pending.tone, 'warn');
+  assert.match(pending.advice, /回讀/);
+
+  const conflict = model.describeExport({ status: 'CONFLICT', items: [item('CONFLICT'), item('PENDING')] });
+  assert.equal(conflict.tone, 'bad');
+  assert.match(conflict.advice, /沒有寫入任何格/);
+  assert.equal(model.describeExport(null), null);
+  assert.deepEqual(model.exportCounts({ items: [item('SUCCEEDED'), item('FAILED'), item('FAILED')] }), { SUCCEEDED: 1, FAILED: 2 });
+});
+
+test('寫回：按鈕條件需預覽通過且老師確認；未完成的上次紀錄顯示「重試」', () => {
+  assert.equal(model.canWriteBack({ canWrite: true }, true), true);
+  assert.equal(model.canWriteBack({ canWrite: true }, false), false);
+  assert.equal(model.canWriteBack({ canWrite: false }, true), false);
+  assert.equal(model.canWriteBack(null, true), false);
+  assert.equal(model.writeLabel(null), '寫回 Google Sheets');
+  assert.equal(model.writeLabel({ status: 'SUCCEEDED' }), '寫回 Google Sheets');
+  for (const status of ['FAILED', 'PENDING_VERIFICATION', 'CONFLICT']) assert.equal(model.writeLabel({ status }), '重試寫回', status);
+  for (const key of ['SUCCEEDED', 'FAILED', 'PENDING_VERIFICATION', 'CONFLICT', 'PENDING']) assert.ok(model.EXPORT_STATUS_LABEL[key], key);
+  for (const key of ['WILL_WRITE', 'ALREADY_WRITTEN', 'NO_WINNER', 'CONFLICT']) assert.ok(model.PREVIEW_STATUS_LABEL[key], key);
+});

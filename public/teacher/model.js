@@ -84,6 +84,106 @@ export function resultUnits(snapshot) {
   });
 }
 
+/* ---------- 寫回原 Google Sheets（#17／#18） ---------- */
+export const EXPORT_STATUS_LABEL = {
+  SUCCEEDED: '已寫入並核對', FAILED: '失敗（確認未寫入）', PENDING_VERIFICATION: '待核對（不確定是否已寫入）',
+  CONFLICT: '衝突（已停止）', PENDING: '未執行', WRITING: '寫入中', PREVIEW: '預覽',
+};
+export const PREVIEW_STATUS_LABEL = {
+  WILL_WRITE: '將寫入', ALREADY_WRITTEN: '已寫入（先前已核對）', NO_WINNER: '無人作答，不變更', CONFLICT: '衝突',
+};
+
+function columnLetters(index) {
+  let n = index + 1;
+  let letters = '';
+  while (n > 0) {
+    const rest = (n - 1) % 26;
+    letters = String.fromCharCode(65 + rest) + letters;
+    n = Math.floor((n - 1) / 26);
+  }
+  return letters;
+}
+
+/**
+ * 目標格顯示：優先用預覽帶來的位置；歷史紀錄沒有名稱時，用同一活動預覽學到的工作表名稱（titles: {sheetId: 名稱}），
+ * 都沒有才顯示工作表 ID。
+ */
+export function cellLabel(target, titles) {
+  if (!target) return '';
+  if (target.location) return target.location;
+  const cell = `${columnLetters(target.columnIndex)}${target.rowIndex + 1}`;
+  const title = titles?.[target.sheetId];
+  return title ? `${title}!${cell}` : `工作表 ${target.sheetId}！${cell}`;
+}
+
+/** 從預覽（位置形如「學習單!G5」）學到 sheetId → 工作表名稱。 */
+export function sheetTitlesFrom(preview) {
+  const titles = {};
+  for (const unit of preview?.units ?? []) {
+    for (const q of unit.questions ?? []) {
+      const at = q.target?.location?.lastIndexOf('!') ?? -1;
+      if (at > 0) titles[q.target.sheetId] = q.target.location.slice(0, at);
+    }
+  }
+  return titles;
+}
+
+export function exportCounts(view) {
+  const counts = {};
+  for (const item of view?.items ?? []) counts[item.status] = (counts[item.status] ?? 0) + 1;
+  return counts;
+}
+
+// 寫入已送出後才發生的錯誤碼：這些情況不能保證 Google Sheets 沒有被修改。
+const POST_WRITE_CODES = new Set(['STRUCTURE_CHANGED_AFTER_WRITE', 'CHANGED_EXTERNALLY', 'VERIFY_UNAVAILABLE']);
+
+/**
+ * 依逐題狀態與錯誤碼產生處理建議；無法確定時明說「可能已寫入」，絕不保證未修改。
+ * 批次狀態只是摘要：FAILED 批次可能含已成功的格子，CONFLICT 也可能發生在寫入之後。
+ */
+function adviceFor(view, counts) {
+  const items = view.items ?? [];
+  const succeeded = counts.SUCCEEDED ?? 0;
+  const pending = counts.PENDING_VERIFICATION ?? 0;
+  const afterWrite = items.some((item) => POST_WRITE_CODES.has(item.errorCode));
+  switch (view.status) {
+    case 'SUCCEEDED':
+      return null;
+    case 'FAILED':
+      if (succeeded > 0) return '部分格子已寫入並核對成功，其餘失敗。請依下表逐題核對線上內容；排除原因（例如分享為「編輯者」、網路）後可重試，已成功的不會重複寫入。';
+      if (pending > 0 || afterWrite) return '寫入結果不完整，部分格子可能已寫入。請依下表逐題核對線上內容，再重試。';
+      return '這次沒有寫入任何格（Google 明確拒絕、回讀確認未寫入，或寫入前就失敗）。結果仍保留；排除原因（例如分享為「編輯者」、網路）後可重試。';
+    case 'PENDING_VERIFICATION':
+      return '無法確認 Google Sheets 是否已寫入。請按「重試寫回」，系統會先回讀線上內容核對，已寫入的不會重複寫入。';
+    case 'CONFLICT':
+      if (succeeded > 0 || pending > 0 || afterWrite) return '寫入已送出，但回讀發現來源被改動（內容或結構不同）。部分格子可能已寫入；系統沒有再修改任何內容。請依下表逐題核對線上內容，必要時恢復原狀後重試。';
+      return '來源與匯入時不同，寫入前就已停止，這次沒有寫入任何格。請恢復原內容，或另建活動重新匯入。';
+    case 'WRITING':
+      return '寫入進行中，請稍候。';
+    default:
+      return null;
+  }
+}
+const TONE = { SUCCEEDED: 'ok', FAILED: 'bad', PENDING_VERIFICATION: 'warn', CONFLICT: 'bad', WRITING: 'warn' };
+
+/** 一次匯出的整體說明；絕不把部分失敗說成成功。 */
+export function describeExport(view) {
+  if (!view) return null;
+  const counts = exportCounts(view);
+  const total = view.items?.length ?? 0;
+  const done = counts.SUCCEEDED ?? 0;
+  const headline = view.status === 'SUCCEEDED'
+    ? (total ? `全部 ${total} 格已寫入並回讀核對。` : '沒有需要寫入的答案。')
+    : `${done} / ${total} 格已核對成功。`;
+  return { headline, tone: TONE[view.status] ?? 'warn', advice: adviceFor(view, counts), counts };
+}
+
+/** 可寫回的條件：預覽通過、老師確認暫停編輯，且沒有進行中的操作。 */
+export const canWriteBack = (preview, confirmedPaused) => Boolean(preview?.canWrite && confirmedPaused);
+
+/** 最近一次匯出尚未完成時，按鈕顯示「重試」。 */
+export const writeLabel = (latest) => (latest && latest.status !== 'SUCCEEDED' ? '重試寫回' : '寫回 Google Sheets');
+
 /* ---------- 快照順序 ---------- */
 const PHASE_RANK = { PREPARING: 0, OPEN: 1, CLOSED: 2 };
 
