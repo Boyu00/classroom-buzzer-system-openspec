@@ -2,7 +2,7 @@
 
 以 Google Sheets Guided Notes 為題目來源的課堂搶答系統，支援老師、學生組別、單題／題組、速度／公平模式、線上原格寫回及 CSV。
 
-**目前狀態：** 功能（教師頁、學生頁、結果頁、Sheets 匯入、原格寫回、CSV）都已實作，並已在真實 Google Sheets 上進行人工驗收與腳本驗證，**部分項目仍待補測**（tasks 9.2 未勾選）；#40（教師頁寫回面板）、#41（驗收清單）、#42（全回歸與 tasks 勾選）都已合併。哪些驗收項目是人工做的、哪些只有自動測試，逐項記在 [驗收清單與紀錄](docs/acceptance-checklist.md) 第四節，**不把自動化結果當成人工驗收**。
+**目前狀態：** 功能（教師頁、學生頁、結果頁、Sheets 匯入、原格寫回、CSV）都已實作，並已在真實 Google Sheets 上完成人工驗收；AC-06、AC-10（並行競態）經兩人確認以自動測試為準，tasks 9.2 尚未勾選。#40（教師頁寫回面板）、#41（驗收清單）、#42（全回歸與 tasks 勾選）、#44（A 端補測與 AI 對話摘要）都已合併。哪些驗收項目是人工做的、哪些只有自動測試，逐項記在 [驗收清單與紀錄](docs/acceptance-checklist.md) 第四節，**不把自動化結果當成人工驗收**。
 
 - [完整產品規格](spec.md)：產品需求保留原第一版內容，開發方法改用 OpenSpec。
 - [提案](openspec/changes/build-classroom-buzzer/proposal.md)：目的與能力範圍。
@@ -111,7 +111,7 @@ Migration 可重跑；已套用版本會核對 checksum，不可直接修改舊 
 | 原 Sheets 寫回（後端） | #17 | B | [#38](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/38) |
 | 教師頁寫回面板 | #18 | B | [#40](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/40) |
 | 1 師／10 組／20 題整合驗證 | #20 | 共同 | [#39](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/39) |
-| 人工驗收清單與紀錄、全回歸與 tasks 勾選 | #21 | 共同 | [#41](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/41)、[#42](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/42) |
+| 人工驗收清單與紀錄、全回歸與 tasks 勾選 | #21 | 共同 | [#41](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/41)、[#42](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/42)、[#44](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/44) |
 
 每個 PR 的作者、審閱者與意見連結見 [分工與接力紀錄](docs/collaboration.md)。
 
@@ -120,9 +120,9 @@ Migration 可重跑；已套用版本會核對 checksum，不可直接修改舊 
 在真實瀏覽器（Chrome 一般與無痕、Edge）與真實 Google Sheets（三份測試副本，含 SPEED 與 FAIR）上人工驗收 AC-01～AC-24，逐項證據與限制見 [docs/acceptance-checklist.md](docs/acceptance-checklist.md) 第四節：
 
 - **人工驗證通過：** AC-01～05、07～09、11、12、14～17、19～24（AC-20 為 2026-11-23 的 Excel／Google 試算表核對）。
-- **只驗了一部分：** AC-13（匯入後改格位）人工做了 3 種，其餘 5 種以真實表腳本驗證。
-- **以 API 層級腳本驗證、非瀏覽器人工操作：** AC-18（題組完整性）；AC-04 的「開啟後新組加入被拒」。
-- **以自動測試為準：** AC-06、AC-10（並行競態，人工無法穩定製造）。
+- **兩人分別補測：** AC-13（匯入後改格位）8 種變動，B 人工 3 種，A 人工 5 種（預覽阻擋，另 1 次實際寫回前重查）；AC-18（題組完整性）B 以 API 腳本、A 以瀏覽器與 Console 驗證。A 的紀錄見 [docs/manual-acceptance-member-a.md](docs/manual-acceptance-member-a.md)。
+- **以 API 層級腳本驗證、非瀏覽器人工操作：** AC-04 的「開啟後新組加入被拒」。
+- **以自動測試為準（兩人確認）：** AC-06、AC-10（並行競態，人工無法穩定製造）。
 
 ## 已知限制
 
@@ -159,7 +159,8 @@ openspec validate build-classroom-buzzer --strict
 
 ## 下一步
 
-1. 剩餘驗收：AC-13 其餘 5 種結構變動的人工操作、AC-18 的瀏覽器人工版；AC-06、AC-10 以自動測試為準是否可接受，需兩人確認後才能勾選 tasks 9.2（#21）。
-2. 交付前置：兩人各自的 AI 對話整理（移除機密）與個人心得、Demo 影片（#24），再透過表單繳交（#25，期限 2026-11-30 00:00）。
-3. OpenSpec：以上任務條件都完成後，再做完整 Verify、Sync、Archive（#22）；半成品不歸檔。
-4. 本機變更不會自動上傳 GitHub：需依序 commit、push 分支、建立 PR，再由另一人 review 後合併 main；其他人的變更也需 fetch／pull 才會出現在本機。
+1. 驗收收尾：依兩份紀錄決定是否勾選 tasks 9.2（#21）。
+2. 交付資料：AI 對話整理已入庫（[A](docs/ai-conversation-member-a.md)、[B](docs/ai-conversation-member-b.md)）；個人心得各自完成；Demo 影片由 A 拍攝（#24）。
+3. OpenSpec：上述完成後做完整 Verify、Sync、Archive（#22）；半成品不歸檔。
+4. 最終確認交付資料後提交表單（#25，期限 2026-11-30 00:00）；不以表單已提交作為開始 Verify 的前提。
+5. 本機變更不會自動上傳 GitHub：需依序 commit、push 分支、建立 PR，再由另一人 review 後合併 main；其他人的變更也需 fetch／pull 才會出現在本機。

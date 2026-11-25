@@ -81,6 +81,7 @@
 | B #18 教師頁寫回面板 | Boyu00 | [PR #40](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/40)，已合併 3642391 | [A 兩項 P2 意見（留言）](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/40#issuecomment-7162312176)；[修正後複查：無阻擋問題，可合併](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/40#issuecomment-7163881560)（留言形式） | A 重跑 npm test 207／207、教師頁 E2E 58／58（假 Sheets）；合併後 main 209／209，見 docs/verification.md |
 | #21 人工驗收清單與紀錄 | Boyu00 | [PR #41](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/41)，已合併 55fc841 | [A 複查意見](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/41#issuecomment-7163882601)；[修正後複查：通過，沒有新增阻擋問題](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/41#issuecomment-7164804232)（留言形式） | docs/acceptance-checklist.md 第四節 |
 | 全回歸與 tasks 勾選 | Boyu00 | [PR #42](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/42)，已合併 3147e59 | [A 複查意見](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/42#issuecomment-7164503520)；[修正後複查：可合併](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/42#issuecomment-7164805338)（留言形式） | A 以 Node v24.22.0 重跑 209／209、58／58、20／20 |
+| A 端 AC-13／AC-18 補測與 AI 對話摘要 | a0972776282-tech | [PR #44](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/44)，已合併 5180933 | B 審查：機密掃描、review 連結以 GitHub API 核對、git diff --check（GitHub 的 Approve 送出時回傳錯誤，審查結論記在 #43 留言） | docs/manual-acceptance-member-a.md、docs/ai-conversation-member-a.md |
 
 每人至少一筆由自己提出且已合併 PR，以及對另一人的實質 review：A 的 #27～#34 都經 Boyu00 正式 Approve；Boyu00 的 PR 中 A 以「要求修改」的正式 review 提出實質意見，修正後多以留言表示複查通過（#35～#42 在 GitHub 上沒有 Approve 型態的 review，這裡如實標示）。建立初始規劃 PR 可保留協作紀錄，但不代表功能 issues 已完成。
 
@@ -94,8 +95,8 @@ PR #29 五點建議追蹤：CLOSED 名單欄位需求依結果頁整合再確認
 | --- | --- | --- | --- | --- |
 | 尚未紀錄 | — | — | — | — |
 
-## AI 使用與交付（待填）
+## AI 使用與交付
 
-保留實際 AI 對話、各自負責內容與檢查心得；分享或提交前移除機密。YouTube 影片、表單確認及心得待真實完成後填入，不能以 AI 產生文件取代實際參與。
+AI 對話整理（節錄，非逐字稿，已移除機密）：[member A](ai-conversation-member-a.md)（PR #44）、[member B](ai-conversation-member-b.md)（PR #43）。保留實際 AI 對話、各自負責內容與檢查心得；分享或提交前移除機密。YouTube 影片、表單確認及心得待真實完成後填入，不能以 AI 產生文件取代實際參與。
 
 2026-11-22 PR #34 合併前整合：main 已合併 #32（79f66f6）與 #33（72fbb3a）；解開 package.json／package-lock.json 衝突，同時保留 google-auth-library 11.3.4 與 devDependency linkedom 0.18.12，重裝後 119／119 通過。組員三項非阻擋建議（統一原生空欄位提示、本地時間顯示、顯式處理非 JSON 錯誤）留作後續介面改善，本次不變更已 review 的產品程式。
