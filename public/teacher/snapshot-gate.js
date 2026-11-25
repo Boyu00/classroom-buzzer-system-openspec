@@ -21,6 +21,16 @@ export function createSnapshotGate() {
     get activityId() { return activityId; },
     get snapshot() { return snapshot; },
 
+    /** 目前的活動與世代；沒有監看中的活動回傳 null。其他非同步操作（例如寫回）用它綁定請求。 */
+    current() {
+      return activityId === null ? null : { id: activityId, epoch };
+    },
+
+    /** 回覆抵達時確認請求所屬範圍仍是目前的活動與世代。 */
+    same(scope) {
+      return Boolean(scope) && activityId !== null && scope.epoch === epoch && scope.id === activityId;
+    },
+
     /** 開始監看某活動；回傳此連線的世代憑證，SSE 回呼要帶著它。 */
     attach(id) {
       epoch += 1;

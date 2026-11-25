@@ -3,6 +3,7 @@ import { createApi } from './api.js';
 import { el, mount } from './dom.js';
 import * as model from './model.js';
 import { createSnapshotGate } from './snapshot-gate.js';
+import { createExportController } from './export-controller.js';
 
 // 教師控制台。所有文字（組名、答案、試算表內容）一律經 el() 以文字節點加入，不使用 innerHTML。
 const app = document.querySelector('#app');
@@ -15,6 +16,8 @@ let snapshot = null;
 let activityId = null;
 // 決定哪一份快照可以顯示（世代、SSE 優先、階段只前進），規則與測試見 snapshot-gate.js。
 const gate = createSnapshotGate();
+// 寫回面板的狀態與請求（綁定活動與畫面世代）；狀態變動時重畫面板。
+const exportCtl = createExportController({ api, gate, onChange: () => renderExport() });
 let refs = {};
 const importState = { spreadsheet: '', sheets: [], selected: [], email: '', title: '', preview: null };
 
@@ -62,6 +65,7 @@ const button = (label, attrs = {}, onclick) => el('button', { type: 'button', ..
 /* ---------- 啟動與畫面切換 ---------- */
 function detach() {
   gate.detach();
+  exportCtl.reset();
   stream?.close();
   stream = null;
   snapshot = null;
@@ -140,10 +144,11 @@ async function dashboard() {
     activity: el('section', { 'aria-labelledby': 'activity-title', hidden: true }),
     import: el('section', { 'aria-labelledby': 'import-title', hidden: true }),
     monitor: el('section', { 'aria-labelledby': 'monitor-title', hidden: true }),
+    export: el('section', { 'aria-labelledby': 'export-title', hidden: true }),
     dialog: buildCloseDialog(),
   };
   // 建立活動放在最後：結束後老師先看結果，沒有活動時則只會看到建立面板。
-  mount(app, pageHeader(true), refs.status, refs.activity, refs.import, refs.monitor, refs.create, refs.dialog);
+  mount(app, pageHeader(true), refs.status, refs.activity, refs.import, refs.monitor, refs.export, refs.create, refs.dialog);
   buildCreatePanel();
   buildImportPanel();
   try {
@@ -157,6 +162,7 @@ async function dashboard() {
 
 function attach(id) {
   const token = gate.attach(id);
+  exportCtl.reset();
   stream?.close();
   activityId = id;
   snapshot = null;
@@ -190,7 +196,9 @@ function renderAll() {
   refs.activity.hidden = !snapshot;
   refs.import.hidden = state !== 'PREPARING';
   refs.monitor.hidden = !snapshot;
+  refs.export.hidden = state !== 'CLOSED';
   if (snapshot) { renderActivity(); renderMonitor(); }
+  if (state === 'CLOSED') exportCtl.ensureLoaded();
 }
 
 function modeRadios(current, name, onChange) {
@@ -427,6 +435,93 @@ function renderMonitor() {
           el('td', {}, String(row.rank)),
           el('th', { scope: 'row' }, row.groupName, row.isWinner ? el('span', { class: 'badge' }, '勝出') : null),
           el('td', {}, String(row.acceptedOrder)), el('td', {}, answerList(row.answers)))))))));
+}
+
+/* ---------- 寫回原 Google Sheets ---------- */
+// 狀態與請求流程在 export-controller.js（綁定活動與畫面世代）；這裡只負責畫面。
+const EXPORT_LABELS = model.EXPORT_STATUS_LABEL;
+
+const statusBadge = (status) => el('span', { class: `badge status-${status.toLowerCase()}` }, EXPORT_LABELS[status] ?? status);
+
+function exportItemsTable(items, caption, titles) {
+  return el('table', { class: 'export-table' },
+    el('caption', {}, caption),
+    el('thead', {}, el('tr', {}, ['題號', '目標格', '狀態', '說明'].map((h) => el('th', { scope: 'col' }, h)))),
+    el('tbody', {}, items.map((item) => el('tr', {},
+      el('th', { scope: 'row' }, item.questionId),
+      el('td', {}, model.cellLabel(item.target, titles)),
+      el('td', {}, statusBadge(item.status)),
+      el('td', {}, item.message ?? (item.errorCode ? `錯誤代碼：${item.errorCode}` : ''))))));
+}
+
+function renderExportResult(view, titles) {
+  const info = model.describeExport(view);
+  if (!info) return null;
+  return el('div', { class: `export-result ${info.tone}`, role: 'status' },
+    el('h3', {}, '最近一次寫回'),
+    el('p', {}, statusBadge(view.status), ' ', info.headline),
+    info.advice ? el('p', { class: 'hint' }, info.advice) : null,
+    view.items.length ? exportItemsTable(view.items, '逐題寫回實況', titles) : null);
+}
+
+function renderExportPreview(preview) {
+  if (!preview) return null;
+  const { summary } = preview;
+  return el('div', { class: 'preview-box' },
+    el('h3', {}, '寫回預覽'),
+    el('p', {}, `將寫入 ${summary.willWrite} 格；先前已寫入 ${summary.alreadyWritten} 格；無人作答 ${summary.noWinner} 題（不變更）；衝突 ${summary.conflicts} 格。`),
+    preview.canWrite ? null : el('p', { class: 'hint bad', role: 'alert' },
+      preview.structureOk ? '部分原格內容與匯入時不同，已停止。請恢復原內容，或另建活動重新匯入。'
+        : '試算表結構與匯入時不同（工作表被刪除、改名、增減列欄或合併範圍改變），已停止。請恢復原結構，或另建活動重新匯入。'),
+    preview.units.map((unit) => el('article', { class: 'unit' },
+      el('h4', {}, `第 ${unit.order + 1} 單位（${model.TYPE_LABEL[unit.type]}）${unit.winnerGroupName ? `　勝出：${unit.winnerGroupName}` : '　無人作答'}`),
+      el('table', { class: 'export-table' },
+        el('caption', {}, `第 ${unit.order + 1} 單位的寫回內容`),
+        el('thead', {}, el('tr', {}, ['題號', '目標格', '狀態', '寫入答案'].map((h) => el('th', { scope: 'col' }, h)))),
+        el('tbody', {}, unit.questions.map((q) => el('tr', { class: q.status === 'CONFLICT' ? 'pending' : null },
+          el('th', { scope: 'row' }, q.questionId),
+          el('td', {}, model.cellLabel(q.target)),
+          el('td', {}, model.PREVIEW_STATUS_LABEL[q.status] ?? q.status, q.message ? el('small', {}, ` ${q.message}`) : null),
+          el('td', { class: 'wide-cell' }, q.answer === null ? '—' : el('span', { class: 'text' }, q.answer)))))))));
+}
+
+function renderExport() {
+  if (!refs.export) return;
+  const { preview, latest, history, confirmedPaused, sheetTitles } = exportCtl.state;
+  const previewBtn = button('預覽寫回', {}, (event) => run(event.currentTarget, () => exportCtl.preview()));
+  const paused = el('input', {
+    id: 'export-paused', type: 'checkbox', checked: confirmedPaused,
+    onchange: (event) => { exportCtl.setPaused(event.currentTarget.checked); document.querySelector('#export-paused')?.focus(); },
+  });
+  const writeBtn = button(model.writeLabel(latest), { id: 'export-write', disabled: !model.canWriteBack(preview, confirmedPaused), 'aria-describedby': 'export-hint' },
+    (event) => run(event.currentTarget, async () => {
+      const outcome = await exportCtl.write();
+      // 活動已切換或預覽已失效時 stale 為 true：舊回覆不得在新畫面顯示成功。
+      if (outcome.ok) showNotice('已全部寫入原 Google Sheets，並逐格回讀核對。');
+    }));
+  mount(refs.export,
+    el('h2', { id: 'export-title' }, '寫回原 Google Sheets'),
+    el('p', {}, '把各單位勝出組的答案寫回匯入時的原格，只更新答案格的內容（純文字，公式開頭也不會變成公式），其他內容與格式不變；無人作答的格不變。服務帳戶需是該試算表的「編輯者」。'),
+    el('p', { class: 'hint' }, '注意：寫回後，原格的 {{Q:…}} 標記會被答案取代。之後若要用同一份試算表重新匯入，請先把標記貼回去，或另外複製一份範本。'),
+    el('div', { class: 'actions' }, previewBtn),
+    renderExportPreview(preview),
+    preview ? el('div', { class: 'stack wide-stack' },
+      el('label', { class: 'choice', for: 'export-paused' }, paused, el('span', {}, '我已請其他人暫停編輯此試算表，寫回完成後我會再恢復。')),
+      el('p', { id: 'export-hint', class: 'hint' }, preview.canWrite
+        ? (confirmedPaused ? '寫入後系統會逐格回讀核對，全部相符才會顯示成功。' : '請先勾選上方確認。')
+        : '預覽有衝突，無法寫回。'),
+      el('div', { class: 'actions' }, writeBtn))
+      : (latest && latest.status !== 'SUCCEEDED' ? el('p', { class: 'hint' }, '上次寫回未完成。請先重新預覽，確認後可重試。') : null),
+    renderExportResult(latest, sheetTitles),
+    history.length > 1 ? el('details', {},
+      el('summary', {}, `匯出紀錄（共 ${history.length} 次）`),
+      el('table', {},
+        el('caption', {}, '所有寫回紀錄，新到舊'),
+        el('thead', {}, el('tr', {}, ['時間', '狀態', '各格實況'].map((h) => el('th', { scope: 'col' }, h)))),
+        el('tbody', {}, history.map((entry) => el('tr', {},
+          el('td', {}, new Date(entry.createdAt).toLocaleString('zh-TW')),
+          el('td', {}, statusBadge(entry.status)),
+          el('td', {}, Object.entries(model.exportCounts(entry)).map(([status, n]) => `${EXPORT_LABELS[status] ?? status} ${n}`).join('、') || '無需寫入')))))) : null);
 }
 
 start();
