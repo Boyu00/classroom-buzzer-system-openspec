@@ -1,12 +1,12 @@
 # 分工與接力紀錄
 
-功能實作已完成：A 負責的 #3～#12 與 B 負責的 #13～#17、#19 都已合併，#18 教師頁寫回面板（[PR #40](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/40)）與人工驗收清單（[PR #41](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/41)）待 review。人工驗收已於 2026-11-25 執行，逐項結果見 [docs/acceptance-checklist.md](acceptance-checklist.md) 第四節；下表只記實際發生的 PR 與 review，沒有 review 的項目不寫成已 review。
+功能實作已完成：A 負責的 #3～#12 與 B 負責的 #13～#17、#19 都已合併，#18 教師頁寫回面板（[PR #40](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/40)）也已合併。人工驗收清單（[PR #41](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/41)）與全回歸／tasks 勾選（[PR #42](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/42)）都已合併。人工驗收已於 2026-11-25 執行，逐項結果見 [docs/acceptance-checklist.md](acceptance-checklist.md) 第四節；下表只記實際發生的 PR 與 review，沒有 review 的項目不寫成已 review。
 
 | 角色 | GitHub 帳號 | Issues | 現況 |
 | --- | --- | --- | --- |
 | member A | a0972776282-tech | #3～#12 | 全部已合併（PR #27、#28、#29、#31、#34，各經 Boyu00 正式 Approve） |
-| member B | Boyu00 | #13～#19 | #13～#17、#19 已合併（PR #30、#32、#33、#35、#36、#37、#38，各經 A review）；#18 教師頁寫回面板（PR #40）待 review；寫回已在真實 Sheets 驗證；AC-01～AC-24 人工驗收已執行（見驗收清單），Demo 未完成 |
-| 共同 | 兩人 | #1～#2、#20～#25 | #20 整合驗證（PR #39）已合併；#21 人工驗收已執行，紀錄在 PR #41 待 review；#22～#25（verify／sync／archive、README、Demo、繳交）未完成 |
+| member B | Boyu00 | #13～#19 | #13～#17、#19 已合併（PR #30、#32、#33、#35、#36、#37、#38，各經 A review）；#18 教師頁寫回面板（PR #40）已合併；寫回已在真實 Sheets 驗證；AC-01～AC-24 人工驗收已執行（見驗收清單），Demo 未完成 |
+| 共同 | 兩人 | #1～#2、#20～#25 | #20 整合驗證（PR #39）已合併；#21 人工驗收已執行，紀錄在 PR #41（已合併）；全回歸與 tasks 勾選在 PR #42（已合併）；#22～#25（verify／sync／archive、README、Demo、繳交）未完成 |
 
 ## 既有 issues 與責任
 
@@ -78,10 +78,11 @@
 | B #15 教師控制台 | Boyu00 | [PR #37](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/37)，已合併 7f2b4f0 | [A 要求修改（正式 review）](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/37#pullrequestreview-6022386717)（舊 HTTP 快照覆蓋較新 SSE）；[複查](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/37#issuecomment-7104068556)、[同步 main 後複查](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/37#issuecomment-7104648696)（留言形式） | docs/teacher-page.md；`e2e:teacher` |
 | B #17 原 Sheets 寫回（後端） | Boyu00 | [PR #38](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/38)，已合併 ec298f5 | [A 要求修改（正式 review）](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/38#pullrequestreview-6022431196)（兩項 P2）；[複查](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/38#issuecomment-7104185007)、[同步 main 後複查](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/38#issuecomment-7104680883)（留言形式） | docs/writeback.md；真實 Sheets 驗證 |
 | #20 1 師／10 組／20 題整合驗證 | Boyu00 | [PR #39](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/39)，已合併 9c42346 | [A 複查留言：無阻擋問題，可合併](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/39#issuecomment-7133198170)（留言形式） | docs/verification.md |
-| B #18 教師頁寫回面板 | Boyu00 | [PR #40](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/40)，待 review | A 已留下複查意見並要求修正，修正後等待複查；尚未合併 | 單元測試與瀏覽器 E2E；真實 Sheets 與人工驗收見驗收清單 |
-| #21 人工驗收清單與紀錄 | Boyu00 | [PR #41](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/41)，待 review | A 已留下複查意見（修正「另一台裝置」文字）；尚未合併 | docs/acceptance-checklist.md 第四節 |
+| B #18 教師頁寫回面板 | Boyu00 | [PR #40](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/40)，已合併 3642391 | [A 兩項 P2 意見（留言）](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/40#issuecomment-7162312176)；[修正後複查：無阻擋問題，可合併](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/40#issuecomment-7163881560)（留言形式） | A 重跑 npm test 207／207、教師頁 E2E 58／58（假 Sheets）；合併後 main 209／209，見 docs/verification.md |
+| #21 人工驗收清單與紀錄 | Boyu00 | [PR #41](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/41)，已合併 55fc841 | [A 複查意見](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/41#issuecomment-7163882601)；[修正後複查：通過，沒有新增阻擋問題](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/41#issuecomment-7164804232)（留言形式） | docs/acceptance-checklist.md 第四節 |
+| 全回歸與 tasks 勾選 | Boyu00 | [PR #42](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/42)，已合併 3147e59 | [A 複查意見](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/42#issuecomment-7164503520)；[修正後複查：可合併](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/42#issuecomment-7164805338)（留言形式） | A 以 Node v24.22.0 重跑 209／209、58／58、20／20 |
 
-每人至少一筆由自己提出且已合併 PR，以及對另一人的實質 review：A 的 #27～#34 都經 Boyu00 正式 Approve；Boyu00 的 PR 中 A 以「要求修改」的正式 review 提出實質意見，修正後多以留言表示複查通過（#35～#39 在 GitHub 上沒有 Approve 型態的 review，這裡如實標示）。建立初始規劃 PR 可保留協作紀錄，但不代表功能 issues 已完成。
+每人至少一筆由自己提出且已合併 PR，以及對另一人的實質 review：A 的 #27～#34 都經 Boyu00 正式 Approve；Boyu00 的 PR 中 A 以「要求修改」的正式 review 提出實質意見，修正後多以留言表示複查通過（#35～#42 在 GitHub 上沒有 Approve 型態的 review，這裡如實標示）。建立初始規劃 PR 可保留協作紀錄，但不代表功能 issues 已完成。
 
 PR #29 五點建議追蹤：CLOSED 名單欄位需求依結果頁整合再確認；後端 questions 映射已在受理／結果 API 文件說明。相同時間戳目前以服務注入測試，尚無改變產品 HTTP 時鐘的需求。學生恢復方式在 #12 前確認。finalizeResults 的逐筆答案數量查詢目前通過本機目標，後續負載測試若發現瓶頸再合併查詢。
 

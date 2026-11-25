@@ -2,7 +2,7 @@
 
 以 Google Sheets Guided Notes 為題目來源的課堂搶答系統，支援老師、學生組別、單題／題組、速度／公平模式、線上原格寫回及 CSV。
 
-**目前狀態：** 功能（教師頁、學生頁、結果頁、Sheets 匯入、原格寫回、CSV）都已實作，並已在真實 Google Sheets 上完成人工驗收；#40（教師頁寫回面板）與 #41（驗收清單）待 review 合併。哪些驗收項目是人工做的、哪些只有自動測試，逐項記在 [驗收清單與紀錄](docs/acceptance-checklist.md) 第四節，**不把自動化結果當成人工驗收**。
+**目前狀態：** 功能（教師頁、學生頁、結果頁、Sheets 匯入、原格寫回、CSV）都已實作，並已在真實 Google Sheets 上完成人工驗收；#40（教師頁寫回面板）、#41（驗收清單）、#42（全回歸與 tasks 勾選）都已合併。哪些驗收項目是人工做的、哪些只有自動測試，逐項記在 [驗收清單與紀錄](docs/acceptance-checklist.md) 第四節，**不把自動化結果當成人工驗收**。
 
 - [完整產品規格](spec.md)：產品需求保留原第一版內容，開發方法改用 OpenSpec。
 - [提案](openspec/changes/build-classroom-buzzer/proposal.md)：目的與能力範圍。
@@ -109,9 +109,9 @@ Migration 可重跑；已套用版本會核對 checksum，不可直接修改舊 
 | Google 服務帳戶讀取、標記解析與匯入預覽／確認 | #13、#14 | B | [#30](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/30)、[#32](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/32)、[#33](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/33) |
 | 教師控制台、結果頁、CSV | #15、#16、#19 | B | [#37](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/37)、[#36](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/36)、[#35](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/35) |
 | 原 Sheets 寫回（後端） | #17 | B | [#38](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/38) |
-| 教師頁寫回面板 | #18 | B | [#40](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/40)（待 review） |
+| 教師頁寫回面板 | #18 | B | [#40](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/40) |
 | 1 師／10 組／20 題整合驗證 | #20 | 共同 | [#39](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/39) |
-| 人工驗收清單與紀錄 | #21 | 共同 | [#41](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/41)（待 review） |
+| 人工驗收清單與紀錄、全回歸與 tasks 勾選 | #21 | 共同 | [#41](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/41)、[#42](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/42) |
 
 每個 PR 的作者、審閱者與意見連結見 [分工與接力紀錄](docs/collaboration.md)。
 
@@ -159,6 +159,5 @@ openspec validate build-classroom-buzzer --strict
 
 ## 下一步
 
-1. #40、#41 待 A review 合併；之後重跑全回歸並更新 [驗證紀錄](docs/verification.md)。
-2. 共同：OpenSpec verify／sync／archive（#22）、Demo 影片（#24）、表單繳交（#25）。
+1. 共同：OpenSpec verify／sync／archive（#22）、Demo 影片（#24）、表單繳交（#25）。
 3. 本機變更不會自動上傳 GitHub：需依序 commit、push 分支、建立 PR，再由另一人 review 後合併 main；其他人的變更也需 fetch／pull 才會出現在本機。
