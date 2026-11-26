@@ -50,7 +50,7 @@
 
 | 項目 | 真實內容 |
 | --- | --- |
-| 交接日期／commit／PR | 2026-11-22，codex/student-page；#12 本批待組員 review，完整 A→B 交接驗證仍待 B 確認 |
+| 交接日期／commit／PR | 2026-11-22，codex/student-page；#12 經 PR #34 review 後合併；B 的交接確認見本表「B 確認」列 |
 | 安裝與啟動方式 | README 的 npm ci --ignore-scripts、npm start；目前完整產品操作頁尚未完成 |
 | 測試命令與結果 | 本批 npm ci --ignore-scripts、npm test：87／87；學生 DOM／雙 Cookie HTTP 與真實 Chrome／無痕驗證，見 docs/student-page.md；完整人工 AC 與真實 Sheets 未測 |
 | 模型／API 變更 | 受理與結果見 docs/submission-results-api.md；SSE／重連與 B 匯入接點見 docs/live-sync-api.md；沒有新 migration |
@@ -59,6 +59,7 @@
 | 已合併同步／隱私 | [PR #31](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/31)，b9208d2，Boyu00 Approve；已採納測試競態建議並補到期邊界，76／76 通過 |
 | 本批學生頁 | [PR #34](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/34)，codex/student-page：#12、tasks 5.4～5.6，87／87；docs/student-page.md 說明操作、恢復及 B #16 的結果入口 |
 | 未完成／已知問題 | B #13～#19 與共同整合／真實 Sheets 驗收未完成；#6 完整頁面人工驗收仍待整合。使用者 2026-11-22 確認不提供僅靠組名的 Cookie 遺失／到期／登出接管 |
+| B 確認 | 2026-11-22 [PR #34 Approve](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/34#pullrequestreview-6011416078)：B 依 README 以 Node 24.22.3 執行 npm ci --ignore-scripts、npm test 87／87 通過，並在真實 Chrome 走過學生流程；之後 B 的 #32、#36、#37 直接串接 A 的匯入、結果與即時同步 API。本列於 2026-11-26 補記，「未完成」列中的 B 項目後來由 #30～#40 完成。 |
 
 ## PR 與 review 證據
 
