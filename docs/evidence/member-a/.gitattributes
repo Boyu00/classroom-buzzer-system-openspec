@@ -1,2 +1,2 @@
 # Preserve original CSV bytes (including UTF-8 BOM and CRLF) for evidence hashes.
-*.csv -text
+*.csv -text whitespace=cr-at-eol
