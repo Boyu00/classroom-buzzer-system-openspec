@@ -17,6 +17,8 @@
 
 ## 技術規劃
 
+2026-11-27 跨組對齊：規格更新為 v1.3，學生準備中可「退出組別並重新加入」，OPEN／CLOSED 不允許退出；CSV unit_id 改為 Q:原題號／G:題組代號，內部作答 ID 不變。決議見 [SpecKit issue32](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/32)。操作與驗證見 [學生頁](docs/student-page.md)、[CSV](docs/csv-export.md)；新增瀏覽器測試可執行 `node scripts/e2e-student-leave.mjs`。
+
 Node.js 24.22.0（相容範圍為 24.22 以上的 24.x）、Express 5.3.0、Node 內建 SQLite；前端 HTML／CSS／原生 JavaScript。版本與依賴已記錄於 `.node-version`、`package.json`、`package-lock.json`。目前僅在 `127.0.0.1` 執行，後續以 HTTP API／SSE 與 Google Sheets API 擴充。
 
 Google 憑證放 repository 外，以環境變數提供路徑；不得提交憑證、密碼、session、本機資料庫或未移除機密的對話。`.gitignore` 是 Git 追蹤排除設定，瀏覽器手動上傳仍須自行確認選檔。

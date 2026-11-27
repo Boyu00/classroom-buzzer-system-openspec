@@ -23,6 +23,7 @@ export function mountStudentPage({ document, fetchImpl = globalThis.fetch, watch
   let epoch = 0;
   let version = 0;
   let joining = false;
+  let leaving = false;
   let resultCheck = false;
   let nextCard = 0;
   const active = (run) => !disposed && run === epoch;
@@ -68,7 +69,14 @@ export function mountStudentPage({ document, fetchImpl = globalThis.fetch, watch
     return errors[error.code] ?? fallback;
   }
   function updateControls() {
-    $('join-fields').disabled = joining || session?.role !== 'ANONYMOUS' || !valid;
+    $('join-fields').disabled = joining || leaving || session?.role !== 'ANONYMOUS' || !valid;
+    const canLeave = session?.role === 'STUDENT' && snapshot?.state === 'PREPARING';
+    $('leave-group').hidden = !canLeave;
+    $('leave-help').hidden = !canLeave;
+    $('leave-group').disabled = leaving || !valid || !connected;
+    $('leave-group').textContent = leaving ? '正在確認退出…' : '退出組別並重新加入';
+    $('refresh-session').disabled = leaving;
+    $('refresh-activity').disabled = leaving;
     for (const [id, card] of cards) {
       const receipt = accepted.get(id);
       const locked = !valid || !connected || snapshot?.state !== 'OPEN' || pending.has(id) || !!receipt;
@@ -172,6 +180,7 @@ export function mountStudentPage({ document, fetchImpl = globalThis.fetch, watch
     updateControls();
   }
   async function refreshActivity() {
+    if (leaving) return;
     const run = epoch;
     const atVersion = version;
     try {
@@ -198,6 +207,7 @@ export function mountStudentPage({ document, fetchImpl = globalThis.fetch, watch
     });
   }
   async function bootstrap() {
+    if (leaving) return;
     const run = ++epoch;
     stream?.close();
     connected = false;
@@ -267,15 +277,43 @@ export function mountStudentPage({ document, fetchImpl = globalThis.fetch, watch
       if (active(run)) card.error.textContent = fail(error, '未收到受理回覆，尚未確認成功。請確認受理紀錄，或重試此單位；原稿仍留在本頁。');
     } finally { if (active(run)) { pending.delete(id); updateControls(); } }
   }
+  async function leave() {
+    if (leaving || !valid || !connected || session?.role !== 'STUDENT' || snapshot?.state !== 'PREPARING') return;
+    const run = ++epoch;
+    leaving = true;
+    connected = false;
+    stream?.close();
+    updateControls();
+    say('');
+    let failure;
+    try { await request('/api/student/leave', {}); }
+    catch (error) { failure = error; }
+    if (!active(run)) return;
+    leaving = false;
+    // 成功或回覆遺失都重新讀 session，避免猜測退出結果；舊 SSE／快照因 epoch 不同被忽略。
+    const refreshing = bootstrap();
+    const refreshed = epoch;
+    await refreshing;
+    if (!active(refreshed)) return;
+    if (failure) say(errors[failure.code] ?? '未能確認退出結果。請依目前畫面操作；若連線失敗，請重新確認身分。');
+    else if (valid && session?.role === 'ANONYMOUS') {
+      $('connection-status').textContent = '已退出組別。請輸入加入碼與組名重新加入。';
+      $('group-name').value = '';
+      $('group-name').focus();
+    }
+  }
+  const leaveGroup = () => { void leave(); };
   const refresh = () => { void bootstrap(); };
   const refreshRecords = () => { if (session?.role === 'STUDENT' && valid) void refreshActivity(); };
   $('join-form').addEventListener('submit', join);
   $('refresh-session').addEventListener('click', refresh);
   $('refresh-activity').addEventListener('click', refreshRecords);
+  $('leave-group').addEventListener('click', leaveGroup);
   return { ready: bootstrap(), close() {
     disposed = true; epoch++; stream?.close();
     $('join-form').removeEventListener('submit', join);
     $('refresh-session').removeEventListener('click', refresh);
     $('refresh-activity').removeEventListener('click', refreshRecords);
+    $('leave-group').removeEventListener('click', leaveGroup);
   } };
 }

@@ -174,3 +174,7 @@ Boyu00 正式 Approve：review-6011416078，對應 head f51a6f2；組員記錄 N
 **tasks 勾選依據**：6.1、6.7（AC-01～AC-03、AC-17 真實證據）、7.2、7.3（AC-12、AC-13、AC-17）、7.4（AC-14）、7.5 的真實 Sheets 證據都已在上述紀錄中；9.1 為本節的全回歸。**9.2 不勾選**：AC-13 只有部分人工驗證，AC-06、AC-10 未人工驗，依「未測不標通過」維持未完成。
 
 已知限制：匯出紀錄無法區分某次寫回是真的寫入或確認先前已寫入（PR #40 複查後移除了前端的推論）。
+
+## 2026-11-27 跨組對齊追加回歸
+
+基準 main 5180933，追加準備中學生退出與 CSV Q:題號／G:代號。Windows、Node v24.22.0：npm test 222／222、node scripts/e2e-student-leave.mjs 13／13、教師頁 58／58、結果頁 20／20 通過。前端提示文字微調後另重跑 student-page 15／15。OpenSpec strict 與 git diff --check 通過。細節及待人工 AC-25／AC-26 見 [跨組對齊與新增驗證](cross-group-alignment.md)；不把本機 fixture／無頭瀏覽器結果冒充真實 Google Sheets 人工驗收，也未改動原人工測試資料。

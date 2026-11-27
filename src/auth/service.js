@@ -90,6 +90,11 @@ export function createAuthService(store, { now = Date.now } = {}) {
         .run(next.tokenHash, next.csrfHash, activityId, groupId, next.expiresAt, session.session_id);
       return next;
     },
+    unbindStudent(token, db) {
+      const session = requireSession(token, db);
+      if (session.role !== 'STUDENT') throw new HttpError(403, 'STUDENT_REQUIRED', '此操作僅限已加入組別的學生。');
+      return rotate(db, session.session_id, 'ANONYMOUS');
+    },
     async getSession(token) {
       return store.write(AUTH_LOCK, (db) => {
         sweepExpired(db);

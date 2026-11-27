@@ -29,7 +29,14 @@ export function escapeField(value) {
  */
 export function buildResultsCsv(results) {
   const rows = [];
-  const base = (unit, questionId) => [results.activityId, results.mode, unit.unitId, neutralizeFormula(questionId)];
+  const exportId = (unit) => {
+    const code = unit.type === 'GROUP' ? unit.groupCode : unit.questions[0]?.questionId;
+    if (!['SINGLE', 'GROUP'].includes(unit.type) || typeof code !== 'string' || !/^[A-Za-z0-9._-]+$/.test(code)) {
+      throw new Error('CSV 單位缺少合法的題號或題組代號。');
+    }
+    return `${unit.type === 'GROUP' ? 'G' : 'Q'}:${code}`;
+  };
+  const base = (unit, questionId) => [results.activityId, results.mode, exportId(unit), neutralizeFormula(questionId)];
   for (const unit of [...results.units].sort((a, b) => a.order - b.order)) {
     const submissions = [...(unit.submissions ?? [])].sort((a, b) => a.rank - b.rank);
     if (submissions.length === 0) {

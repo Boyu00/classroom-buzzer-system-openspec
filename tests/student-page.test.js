@@ -51,6 +51,67 @@ async function fixture(t, { identity = student, initial = snapshot(), handle } =
 const cardForm = (f, index = 0) => f.$('units').querySelectorAll('form')[index];
 const fill = (f, index, values) => { const inputs = cardForm(f, index).querySelectorAll('textarea'); values.forEach((value, i) => { inputs[i].value = value; }); };
 
+test('準備中退出回加入頁，雙擊只送一次，舊快照與失效事件不能恢復原身分', async (t) => {
+  let resolveLeave; let left = false;
+  const leaving = new Promise(resolve => { resolveLeave = resolve; });
+  const f = await fixture(t, { initial: snapshot({ state: 'PREPARING' }), handle: (path, options) => {
+    if (path === '/api/student/leave') { assert.equal(options.headers['X-CSRF-Token'], 'csrf'); return leaving; }
+    if (path === '/api/session' && left) return json({ role: 'ANONYMOUS', csrfToken: 'new-csrf' });
+  } });
+  f.send(snapshot({ state: 'PREPARING' }));
+  assert.equal(f.$('leave-group').hidden, false);
+  const old = f.subscriptions[0];
+  f.$('leave-group').click(); f.$('leave-group').click();
+  assert.equal(f.calls.filter(c => c.path === '/api/student/leave').length, 1);
+  assert.equal(f.$('refresh-session').disabled, true);
+  old.onConnection('unauthorized'); old.onSnapshot(snapshot());
+  left = true; resolveLeave(json({ role: 'ANONYMOUS', csrfToken: 'new-csrf' }));
+  await until(() => !f.$('join-panel').hidden);
+  assert.equal(f.$('activity-panel').hidden, true);
+  assert.equal(f.$('units').children.length, 0);
+  assert.equal(f.$('join-fields').disabled, false);
+  assert.match(f.$('connection-status').textContent, /已退出/);
+  old.onSnapshot(snapshot());
+  assert.equal(f.$('units').children.length, 0);
+});
+
+test('退出與老師開啟競態：409 後重取 OPEN 快照，保留學生而非假成功', async (t) => {
+  let attempted = false;
+  const f = await fixture(t, { initial: snapshot({ state: 'PREPARING' }), handle: path => {
+    if (path === '/api/student/leave') { attempted = true; return json({ code: 'INVALID_PHASE' }, 409); }
+    if (attempted && path.endsWith('/snapshot')) return json(snapshot());
+  } });
+  f.send(snapshot({ state: 'PREPARING' }));
+  f.$('leave-group').click();
+  await until(() => f.$('phase').textContent === '搶答中');
+  assert.equal(f.$('join-panel').hidden, true);
+  assert.equal(f.$('leave-group').hidden, true);
+  assert.doesNotMatch(f.$('connection-status').textContent, /已退出/);
+});
+
+test('退出回覆遺失：重新確認 session，不以未收到回覆猜測成功', async (t) => {
+  let attempted = false;
+  const f = await fixture(t, { initial: snapshot({ state: 'PREPARING' }), handle: path => {
+    if (path === '/api/student/leave') { attempted = true; return Promise.reject(new Error('offline')); }
+    if (attempted && path === '/api/session') return json({ role: 'ANONYMOUS', csrfToken: 'new-csrf' });
+  } });
+  f.send(snapshot({ state: 'PREPARING' })); f.$('leave-group').click();
+  await until(() => f.$('page-error').textContent.includes('未能確認退出'));
+  assert.equal(f.$('join-panel').hidden, false);
+  assert.doesNotMatch(f.$('connection-status').textContent, /已退出/);
+});
+
+test('OPEN／CLOSED 與斷線時不能透過退出按鈕發請求', async (t) => {
+  const f = await fixture(t); f.send(snapshot());
+  assert.equal(f.$('leave-group').hidden, true); f.$('leave-group').click();
+  f.send(snapshot({ state: 'CLOSED', units: units.map(u => ({ ...u, submissions: [] })) })); f.$('leave-group').click();
+  assert.equal(f.calls.some(c => c.path === '/api/student/leave'), false);
+  const preparing = await fixture(t, { initial: snapshot({ state: 'PREPARING' }) });
+  preparing.send(snapshot({ state: 'PREPARING' })); preparing.connection('disconnected');
+  assert.equal(preparing.$('leave-group').disabled, true); preparing.$('leave-group').click();
+  assert.equal(preparing.calls.some(c => c.path === '/api/student/leave'), false);
+});
+
 test('匿名加入：驗證六碼與 Unicode 組名、trim，旋轉 CSRF 後恢復等待畫面', async (t) => {
   const f = await fixture(t, { identity: { role: 'ANONYMOUS', csrfToken: 'before' },
     initial: snapshot({ state: 'PREPARING' }), handle: (path, options) => {

@@ -76,13 +76,13 @@
 
 PR #29 五點建議追蹤：CLOSED 名單欄位需求依結果頁整合再確認；後端 questions 映射已在受理／結果 API 文件說明。相同時間戳目前以服務注入測試，尚無改變產品 HTTP 時鐘的需求。學生恢復方式在 #12 前確認。finalizeResults 的逐筆答案數量查詢目前通過本機目標，後續負載測試若發現瓶頸再合併查詢。
 
-## 跨小組討論（待真實討論後填）
+## 跨小組討論
 
-2026-11-20 使用者已在本組確認採用 PR #26 的三項建議：單一未結束活動、六碼指定字元加入碼、trim 後 1～30 Unicode 字元組名；已同步 spec v1.2 與本組 artifacts。這不是與 SpecKit 小組的討論證據，以下跨組紀錄仍待真實完成。
+2026-11-20 使用者先在本組確認採用 PR #26 的三項建議：單一未結束活動、六碼指定字元加入碼、trim 後 1～30 Unicode 字元組名；當時只有本組決定。2026-11-27 的實際跨組確認如下，沒有將早先本組決定改寫成兩組已同意。
 
 | 日期 | 參與者 | 討論事項 | 結論及規格版本 | 證據 |
 | --- | --- | --- | --- | --- |
-| 尚未紀錄 | — | — | — | — |
+| 2026-11-27（臺灣時間） | SpecKit：45678XYZ；OpenSpec：a0972776282-tech（依使用者指示回覆） | v1.2 三條活動規則、準備中學生退出、CSV unit_id | SpecKit 明確同意原三條；本組同意新增退出及 Q:題號／G:代號，更新 spec v1.3；首次密碼設定方式各自維持。兩邊實作與驗證另追蹤，不以決議冒充已完成。 | [issue32](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/32)、[SpecKit 回覆](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/32#issuecomment-7198214097)、[OpenSpec 決議](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/32#issuecomment-7207072503) |
 
 ## AI 使用與交付（待填）
 
