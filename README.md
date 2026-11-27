@@ -2,9 +2,9 @@
 
 以 Google Sheets Guided Notes 為題目來源的課堂搶答系統，支援老師、學生組別、單題／題組、速度／公平模式、線上原格寫回及 CSV。
 
-**目前狀態：** 功能（教師頁、學生頁、結果頁、Sheets 匯入、原格寫回、CSV）都已實作，並已在真實 Google Sheets 上完成人工驗收；AC-06、AC-10（並行競態）經兩人確認以自動測試為準，tasks 9.2 尚未勾選。#40（教師頁寫回面板）、#41（驗收清單）、#42（全回歸與 tasks 勾選）、#44（A 端補測與 AI 對話摘要）都已合併。哪些驗收項目是人工做的、哪些只有自動測試，逐項記在 [驗收清單與紀錄](docs/acceptance-checklist.md) 第四節，**不把自動化結果當成人工驗收**。
+**目前狀態：** 既有功能與 v1.3 新增的準備中退出、可讀 CSV unit_id 已實作。真實 Sheets／獨立瀏覽器的預定人工操作已完成；AC-06／AC-10 由兩人確認採自動證據，其他 API／故障情境的範圍見 [驗收紀錄](docs/acceptance-checklist.md)。PR #43、#45、#46 的整合文件仍待 review／合併，合併後最終回歸與 tasks 9.2 收尾尚未完成。
 
-- [完整產品規格](spec.md)：產品需求保留原第一版內容，開發方法改用 OpenSpec。
+- [完整產品規格](spec.md)：原第一版產品需求加上已確認的跨組對齊規則，現行 v1.3，開發方法採 OpenSpec。
 - [提案](openspec/changes/build-classroom-buzzer/proposal.md)：目的與能力範圍。
 - [設計與 A／B 介面](openspec/changes/build-classroom-buzzer/design.md)：模型、API、交易與整合設計。
 - [實作任務](openspec/changes/build-classroom-buzzer/tasks.md)：對應既有 issues，僅通過驗證者勾選。
@@ -14,7 +14,7 @@
 - [SSE 與重連 API](docs/live-sync-api.md)：授權推播、提交後通知、隱私、前端共用連線模組與 B 的接點。
 - [學生頁操作與 B 整合接點](docs/student-page.md)。
 - [Sheets 匯入 API](docs/import-api.md)、[教師頁](docs/teacher-page.md)、[結果頁](docs/results-page.md)、[原格寫回](docs/writeback.md)、[CSV 匯出](docs/csv-export.md)。
-- [人工驗收清單與紀錄](docs/acceptance-checklist.md)：AC-01～AC-24 逐項的人工步驟、預期、證據與結果。
+- [人工驗收清單與紀錄](docs/acceptance-checklist.md)：AC-01～AC-26 逐項的驗證方式、預期、證據與結果。另有 [A 原始證據索引](docs/evidence/member-a/README.md)。
 - [第一次上傳 GitHub 教學](docs/github-first-upload.md)。
 
 ## 技術規劃
@@ -90,7 +90,7 @@ GOOGLE_APPLICATION_CREDENTIALS=C:/Users/你的帳號/secret/你的服務帳戶�
 
 ## 資料庫與測試
 
-預設資料庫在 `data/classroom.sqlite3`，首次啟動自動建立並執行 migration。可在 `.env` 指定 `DATABASE_PATH`（相對路徑以專案根目錄計）；資料庫、journal 與本機設定不入版控。工作階段與教師密碼雜湊存該本機資料庫；未設定時 session 回應提示初次設定，已設定後必須輸入原密碼。不要把密碼貼到 repository／紀錄；Sheets 匯入需要 Google 服務帳戶金鑰，設定方式見下節。
+預設資料庫在 `data/classroom.sqlite3`，首次啟動自動建立並執行 migration。可在 `.env` 指定 `DATABASE_PATH`（相對路徑以專案根目錄計）；資料庫、journal 與本機設定不入版控。工作階段與教師密碼雜湊存該本機資料庫；未設定時 session 回應提示初次設定，已設定後必須輸入原密碼。不要把密碼貼到 repository／紀錄；Sheets 匯入需要 Google 服務帳戶金鑰，設定方式見上方 Google Sheets 設定。
 
 ```powershell
 npm run db:migrate
@@ -117,7 +117,7 @@ Migration 可重跑；已套用版本會核對 checksum，不可直接修改舊 
 
 每個 PR 的作者、審閱者與意見連結見 [分工與接力紀錄](docs/collaboration.md)。
 
-## 驗收結果摘要（2026-11-25）
+## 驗收結果摘要（更新至 2026-11-27）
 
 在真實瀏覽器（Chrome 一般與無痕、Edge）與真實 Google Sheets（三份測試副本，含 SPEED 與 FAIR）上人工驗收 AC-01～AC-24，逐項證據與限制見 [docs/acceptance-checklist.md](docs/acceptance-checklist.md) 第四節：
 
@@ -126,19 +126,21 @@ Migration 可重跑；已套用版本會核對 checksum，不可直接修改舊 
 - **以 API 層級腳本驗證、非瀏覽器人工操作：** AC-04 的「開啟後新組加入被拒」。
 - **以自動測試為準（兩人確認）：** AC-06、AC-10（並行競態，人工無法穩定製造）。
 
+- **新增 AC-25／AC-26：** 11/27 退出／重新加入、階段限制與刷新正常；新 CSV 的 Q:3／G:A／Q:12 已人工操作與實檔核對，見 [新增驗證](docs/cross-group-alignment.md)。19 張截圖及四份原始 CSV 見 [證據索引](docs/evidence/member-a/README.md)，舊檔與新格式分開標示。
+
 ## 已知限制
 
 - 服務只監聽 `127.0.0.1`，其他裝置不能加入同一場活動；展示與驗收都在同一台電腦以獨立瀏覽器工作階段進行。
-- 學生頁沒有「離開此活動」的入口；活動結束後要加入新活動，需清除 Cookie 或使用新的瀏覽器工作階段。
+- 學生僅準備中可「退出組別並重新加入」；OPEN／CLOSED 不提供退出。結束後加入另一活動仍需新的匿名工作階段，或清除 Cookie。
 - 寫回成功後，原格的 `{{Q:…}}` 標記會被答案取代，重新匯入同一份試算表前要先貼回標記或另複製範本。
 - 匯出紀錄無法區分某次寫回是「真的寫入」還是「確認先前已寫入」；寫回前的預覽會顯示先前已寫入的格數。
 - 教師密碼登入沒有嘗試次數限制（僅本機）。
 - 尚未做手機版面與螢幕閱讀器測試。
-- 規格第 1 步的跨小組討論紀錄尚未補齊。
+- 跨小組對齊已留實際討論與 v1.3 決議，見 [分工紀錄](docs/collaboration.md)；另一組的實作狀態仍須各自驗證。
 
 ## OpenSpec 流程
 
-本組採一個完整 change `build-classroom-buzzer`：Explore → Propose → 分階段 Apply → Verify → Sync → Archive。現有文件為待兩人 review 的提案，規劃完整不等於實作或驗收完成。各能力 spec 位於 change 的 `specs/` 下，尚未同步至 `openspec/specs/` 主規格。
+本組採一個完整 change `build-classroom-buzzer`：Explore → Propose → 分階段 Apply → Verify → Sync → Archive。提案與實作已分階段 review，最終版本回歸與完整 Verify 尚未完成。各能力 spec 位於 change 的 `specs/` 下，尚未同步至 `openspec/specs/` 主規格。
 
 已安裝 OpenSpec 的環境可檢查：
 
@@ -153,7 +155,7 @@ openspec validate build-classroom-buzzer --strict
 
 | 負責人 | GitHub issues | 內容 |
 | --- | --- | --- |
-| member A（先實作） | #3～#12 | 骨架、教師驗證、活動、受理、SSE、隱私、題組送出、公平排序、學生頁 |
+| member A（先實作） | #3～#12；追加 #46 | 骨架、教師驗證、活動、受理、SSE、隱私、題組送出、公平排序、學生頁；準備中退出與 CSV 跨組對齊 |
 | member B（接續） | #13～#19 | Sheets 授權／匯入／映射、教師頁、結果頁、原格寫回／恢復、CSV |
 | 共同 | #1～#2、#20～#25 | 規劃、跨組對齊、測試驗收、文件、Demo、繳交 |
 
@@ -161,7 +163,7 @@ openspec validate build-classroom-buzzer --strict
 
 ## 下一步
 
-1. 驗收收尾：依兩份紀錄決定是否勾選 tasks 9.2（#21）。
+1. Review 後依 #43 → #45 → #46 合併，保留歷史與新規格；固定最新 main SHA 執行完整回歸，再更新驗收結論、tasks 9.2／issue #21。
 2. 交付資料：AI 對話整理已入庫（[A](docs/ai-conversation-member-a.md)、[B](docs/ai-conversation-member-b.md)）；個人心得各自完成；Demo 影片由 A 拍攝（#24）。
 3. OpenSpec：上述完成後做完整 Verify、Sync、Archive（#22）；半成品不歸檔。
 4. 最終確認交付資料後提交表單（#25，期限 2026-11-30 00:00）；不以表單已提交作為開始 Verify 的前提。

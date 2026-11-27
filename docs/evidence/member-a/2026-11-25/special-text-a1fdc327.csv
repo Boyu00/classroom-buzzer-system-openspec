@@ -1,0 +1,11 @@
+﻿activity_id,mode,unit_id,question_id,group_name,answer,accepted_at,accepted_order,rank,is_winner
+a1fdc327-ada6-4102-9de1-13e9b9d82356,SPEED,83bad4d1-ee44-4a9d-82d3-0c258ad28f97,3,甲組,'=1+1,2026-11-25T13:06:51.917Z,1,1,true
+a1fdc327-ada6-4102-9de1-13e9b9d82356,SPEED,83bad4d1-ee44-4a9d-82d3-0c258ad28f97,3,'@乙組,乙組答案,2026-11-25T13:08:53.442Z,3,2,false
+a1fdc327-ada6-4102-9de1-13e9b9d82356,SPEED,781766dc-ec69-49e9-be45-e6ff5b7632fc,7a,甲組,"中文，含逗號與""引號""",2026-11-25T13:08:28.874Z,2,1,true
+a1fdc327-ada6-4102-9de1-13e9b9d82356,SPEED,781766dc-ec69-49e9-be45-e6ff5b7632fc,7b,甲組,"輸入「第一行」，按 Enter 換行，
+再輸入「第二行」",2026-11-25T13:08:28.874Z,2,1,true
+a1fdc327-ada6-4102-9de1-13e9b9d82356,SPEED,781766dc-ec69-49e9-be45-e6ff5b7632fc,7c,甲組,<script>alert(1)</script>,2026-11-25T13:08:28.874Z,2,1,true
+a1fdc327-ada6-4102-9de1-13e9b9d82356,SPEED,781766dc-ec69-49e9-be45-e6ff5b7632fc,7a,'@乙組,乙7a,2026-11-25T13:09:15.503Z,4,2,false
+a1fdc327-ada6-4102-9de1-13e9b9d82356,SPEED,781766dc-ec69-49e9-be45-e6ff5b7632fc,7b,'@乙組,乙7b,2026-11-25T13:09:15.503Z,4,2,false
+a1fdc327-ada6-4102-9de1-13e9b9d82356,SPEED,781766dc-ec69-49e9-be45-e6ff5b7632fc,7c,'@乙組,乙7c,2026-11-25T13:09:15.503Z,4,2,false
+a1fdc327-ada6-4102-9de1-13e9b9d82356,SPEED,5de65b04-cd7e-4395-a3e9-8a95ed5c068b,12,,,,,,false

@@ -1,0 +1,9 @@
+﻿activity_id,mode,unit_id,question_id,group_name,answer,accepted_at,accepted_order,rank,is_winner
+3ebc7a44-cc1f-4868-b1e3-01bff79660b0,SPEED,8bd1a418-5729-4f2f-84d6-6775fd8bdd29,1,甲組,甲組第一題答案,2026-11-25T12:40:06.747Z,1,1,true
+3ebc7a44-cc1f-4868-b1e3-01bff79660b0,SPEED,8bd1a418-5729-4f2f-84d6-6775fd8bdd29,1,乙組,乙組第一題答案,2026-11-25T12:40:16.892Z,2,2,false
+3ebc7a44-cc1f-4868-b1e3-01bff79660b0,SPEED,f627f24b-bd8f-407d-aaba-ed79ae37f055,2,乙組,乙組第二題答案,2026-11-25T12:40:34.258Z,3,1,true
+3ebc7a44-cc1f-4868-b1e3-01bff79660b0,SPEED,f627f24b-bd8f-407d-aaba-ed79ae37f055,2,甲組,甲組第二題答案,2026-11-25T12:40:38.369Z,4,2,false
+3ebc7a44-cc1f-4868-b1e3-01bff79660b0,SPEED,1ecb850d-8e86-4b8c-a70d-da7f8faaf7f3,3,,,,,,false
+3ebc7a44-cc1f-4868-b1e3-01bff79660b0,SPEED,f4afb8ec-52d9-4680-9908-3842e76ac81e,4,,,,,,false
+3ebc7a44-cc1f-4868-b1e3-01bff79660b0,SPEED,0a1ddb53-6cc7-4043-acbe-cc41289a83d9,5,,,,,,false
+3ebc7a44-cc1f-4868-b1e3-01bff79660b0,SPEED,a929974e-4945-4016-9e8e-2ce7dd7dd441,6,,,,,,false

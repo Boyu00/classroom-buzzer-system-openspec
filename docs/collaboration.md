@@ -4,9 +4,9 @@
 
 | 角色 | GitHub 帳號 | Issues | 現況 |
 | --- | --- | --- | --- |
-| member A | a0972776282-tech | #3～#12 | 全部已合併（PR #27、#28、#29、#31、#34，各經 Boyu00 正式 Approve） |
+| member A | a0972776282-tech | #3～#12；追加 #46 | 原任務全部已合併（PR #27、#28、#29、#31、#34，各經 Boyu00 正式 Approve）；#46 準備中退出／CSV 對齊已實作與人工補測，待 review／合併 |
 | member B | Boyu00 | #13～#19 | #13～#17、#19 已合併（PR #30、#32、#33、#35、#36、#37、#38，各經 A review）；#18 教師頁寫回面板（PR #40）已合併；寫回已在真實 Sheets 驗證；AC-01～AC-24 人工驗收已執行（見驗收清單），Demo 未完成 |
-| 共同 | 兩人 | #1～#2、#20～#25 | #20 整合驗證（PR #39）已合併；#21 人工驗收已執行，紀錄在 PR #41（已合併）；全回歸與 tasks 勾選在 PR #42（已合併）；#22～#25（verify／sync／archive、README、Demo、繳交）未完成 |
+| 共同 | 兩人 | #1～#2、#20～#25 | #20 整合驗證（PR #39）已合併；#21 已有 #41／44 人工紀錄及 #46 新證據，待最終 main 回歸結案；#2 討論已定案並留來源；#23 README／分工在 #43／46，最終 review 待完成；#22、#24、#25（verify／sync／archive、Demo、繳交）未完成 |
 
 ## 既有 issues 與責任
 
@@ -101,3 +101,13 @@ PR #29 五點建議追蹤：CLOSED 名單欄位需求依結果頁整合再確認
 AI 對話整理（節錄，非逐字稿，已移除機密）：[member A](ai-conversation-member-a.md)（PR #44）、[member B](ai-conversation-member-b.md)（PR #43）。保留實際 AI 對話、各自負責內容與檢查心得；分享或提交前移除機密。YouTube 影片、表單確認及心得待真實完成後填入，不能以 AI 產生文件取代實際參與。
 
 2026-11-22 PR #34 合併前整合：main 已合併 #32（79f66f6）與 #33（72fbb3a）；解開 package.json／package-lock.json 衝突，同時保留 google-auth-library 11.3.4 與 devDependency linkedom 0.18.12，重裝後 119／119 通過。組員三項非阻擋建議（統一原生空欄位提示、本地時間顯示、顯式處理非 JSON 錯誤）留作後續介面改善，本次不變更已 review 的產品程式。
+
+## 2026-11-27 證據補交與整合接力
+
+A 依使用者要求將 19 張原始截圖與四份 CSV 補入 [證據索引](evidence/member-a/README.md)，補齊 AC-25／26 回報與實檔核對。原始 11/25／11/27 檔案分開保存，不把舊 UUID CSV 改寫成新格式。
+
+PR43（B）保留 README、分工、B AI 摘要及 tasks 1.1／5.7 的 review 來源；PR45（B）保留 11/26 發起討論歷史；PR46（A）新增退出與 CSV 對齊、預先整合上述兩分支，保留作者提交，解開 spec 修訂紀錄衝突並更新過時 README。上述三個 PR 尚待 review／合併，未宣稱組員已 review 新提交。A 對 #43 原 head aced580 的複查可參考 [既有留言](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/43#issuecomment-7187917481)。
+
+建議由 B 確認證據與 #46 最新差異後，依 #43 → #45 → #46 合併。#45 的當時未定案描述由 #46 改成歷史，最後保留 v1.3 定案；#46 已包含兩分支，優先採保留 merge ancestry 的方式，若採 squash 仍須確認內容與衝突解法完整。最終 main 再由 A 固定 SHA 跑 npm test、teacher／results／student-leave 瀏覽器回歸及 OpenSpec strict；通過才更新 9.2／#21 和完整 Verify 紀錄。未合併前的既有通過數不冒充最終版本結果。
+
+A／B AI 摘要均已提供於分支或 main；每人心得仍各自完成並上傳，Demo 由 A 拍攝，不能以本次證據補交代替影片、心得或表單繳交。
