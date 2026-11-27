@@ -1,0 +1,62 @@
+{
+  "date": "2026-11-27",
+  "timezone": "Asia/Taipei",
+  "testedCommit": "7c3a9b9f42d29e00644f9e3514d37efb8e30dbad",
+  "platform": "Windows",
+  "node": "v24.22.0",
+  "npm": "11.19.1",
+  "cleanInstall": true,
+  "tests": {
+    "total": 222,
+    "passed": 222,
+    "failed": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0,
+    "durationMs": 29255.4815
+  },
+  "browser": {
+    "teacher": 58,
+    "results": 20,
+    "studentLeave": 13,
+    "failed": 0,
+    "realHeadlessBrowser": true,
+    "sheetsFixture": true
+  },
+  "staticChecks": {
+    "openspecStrict": "valid",
+    "baselineRelativeLinks": 85,
+    "manualEvidenceHashes": 23
+  },
+  "logs": [
+    {
+      "path": "install.txt",
+      "sha256": "482b390df318145563e7f64e6bf5b2feb4311f8c2fa5b13134a40aecf3d4603a"
+    },
+    {
+      "path": "npm-test.txt",
+      "sha256": "d9b006216c877b8a11358d6df7e1bded5634dcdba77fc88f3e9aa4454f74ea65"
+    },
+    {
+      "path": "teacher-browser.txt",
+      "sha256": "66fcfe682383fa28d1848f95b8c887c2a854260a4d7233fed4beb6c3306af467"
+    },
+    {
+      "path": "results-browser.txt",
+      "sha256": "8a52194f8efce88e4c0d927b4deb1e0de3ecd8309f3cecbe66c9949320119234"
+    },
+    {
+      "path": "leave-browser.txt",
+      "sha256": "93e73d641f691fd7126c74c0a4068c01ba05e14ff0c52cb0e404b2728f14ed81"
+    },
+    {
+      "path": "openspec-strict.txt",
+      "sha256": "bdd2b7ff6fdf6b5a5fad7c0106a7e8c732fec4eba16609e1399dd75f44881bcc"
+    }
+  ],
+  "limitations": [
+    "本輪自動回歸使用獨立暫存SQLite與記憶體Sheets替身，未重做真實Sheets人工操作或寫回。",
+    "人工AC-25以使用者回報為據；AC-26另有CSV，無新增人工截圖。",
+    "完整FR／AC／DC Verify與Sync／Archive、Demo、心得與提交不因回歸通過而視為完成。"
+  ]
+}
