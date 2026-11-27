@@ -1,0 +1,6 @@
+✓ spec/activity-sessions
+✓ spec/answer-submission
+✓ spec/result-export
+✓ spec/result-ranking
+✓ spec/sheets-import
+Totals: 5 passed, 0 failed (5 items)

@@ -5,7 +5,7 @@
 ## 1. 共同規劃與對齊
 
 - [x] 1.1 [共同 #1] 兩人檢閱 proposal、五份能力 spec、design 與本 tasks；驗證：執行 `openspec validate build-classroom-buzzer --strict` 通過，PR 留下實質 review 並確認 API／資料模型。（2026-11-26 核對：B 在 [PR #26](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/26#issuecomment-7014541335) 以留言提出 5 項模型預設值，design.md 已註明採用；API／資料模型的確認是透過 B 對 A 實作 PR #27～#29、#31、#34 的 Approve，並非 #26 上的正式 review；strict validate 通過。）
-- [ ] 1.2 [共同 #2] 與 SpecKit 小組確認產品功能一致；驗證：docs/collaboration.md 留真實討論日期、參與者、結論與規格版本，不以 AI 推測代替。
+- [x] 1.2 [共同 #2] 與 SpecKit 小組確認產品功能一致；驗證：docs/collaboration.md 留真實討論日期、參與者、結論與規格版本，不以 AI 推測代替。（2026-11-27核對：SpecKit issue32原始同意與本組決議、日期、參與者及spec v1.3已留docs/collaboration.md，PR45／46已合併；未宣稱另一組程式已重跑。）
 
 ## 2. 專案骨架與資料層（member A）
 
@@ -70,7 +70,7 @@
 
 - [x] 9.1 [共同 #20] 執行全回歸並檢查各功能已隨實作提交測試，加入 1 師／10 組／20 題的同步及一般受理整合驗證；驗證：實際命令及結果保存至 docs/verification.md，不以最終階段代替各組功能測試。
 - [x] 9.2 [共同 #21] 真實線上 Sheets 以兩模式、老師與至少兩組學生走完 AC-01～AC-24，含另一份改格位表；驗證：逐項記錄環境、步驟、結果與證據，未測不標通過。（2026-11-27 收尾：真實人工／API／約定自動證據見 docs/acceptance-checklist.md 及 A 原始證據；AC-06／10 兩人確認採自動。PR43／45／46 合併後固定 main 7c3a9b9，全回歸 222／222、教師 58／58、結果 20／20、退出 13／13 通過；新增 AC-25／26 人工亦有紀錄。詳見 docs/final-regression-20261127/README.md；本輪不冒充重新人工操作。）
-- [ ] 9.3 [共同 #23] 更新 README、分工表、PR／review 連結與 AI 對話整理；驗證：每人至少一筆實際合併 PR 與實質 review，可由連結核對，對話先移除機密。
+- [x] 9.3 [共同 #23] 更新 README、分工表、PR／review 連結與 AI 對話整理；驗證：每人至少一筆實際合併 PR 與實質 review，可由連結核對，對話先移除機密。（2026-11-27核對：README／分工及A／B AI摘要隨PR43／44／46合併；實際API核對每人已合併PR34／30與另一人的實質review，見docs/openspec-verification-20261127。心得與Demo另追蹤。）
 - [ ] 9.4 [共同 #24] 錄製不超過五分鐘的 YouTube Demo；驗證：完整展示教師及至少兩組學生、真實 Sheets 匯入與原格寫回，留影片連結與長度。
 - [ ] 9.5 [共同 #22] 對照全部 FR／AC／DC 執行 OpenSpec Verify，修正後重驗；驗證：docs/verification.md 記錄實際結果且無未處理缺口，全部前置實作與驗收任務完成。
 

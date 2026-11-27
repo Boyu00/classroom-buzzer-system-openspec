@@ -2,7 +2,7 @@
 
 ## 目前結果（2026-11-27）
 
-PR43／45／46 已合併。main 7c3a9b9 最終回歸：乾淨安裝成功、完整測試 222／222、教師 58／58、結果 20／20、退出 13／13、OpenSpec strict、85 個相對連結與 23 份證據雜湊皆通過。詳見 [最終回歸原始輸出與報告](final-regression-20261127/README.md)；本輪沒有重做真實 Sheets 人工操作，原始人工證據仍見 [索引](evidence/member-a/README.md)。tasks 9.2 依兩種證據收尾，完整 Verify／Sync／Archive 與交付尚待後續。
+PR43／45／46／47 已合併，issue21 已結案。main 7c3a9b9 最終回歸：乾淨安裝成功、完整測試 222／222、教師 58／58、結果 20／20、退出 13／13、OpenSpec strict、85 個相對連結與 23 份證據雜湊皆通過。詳見 [最終回歸原始輸出與報告](final-regression-20261127/README.md)；該輪沒有重做真實 Sheets 人工操作，原始人工證據仍見 [索引](evidence/member-a/README.md)。tasks 9.2 已完成；本次主規格Sync及完整追溯見末節，交付Verify／Archive仍待Demo等證據。
 
 ## 早期實作結果（歷史紀錄）
 
@@ -194,3 +194,9 @@ PR43／45 的文件已預先整合到 PR46 分支並修正 spec 衝突；不代�
 ## main 7c3a9b9 最終回歸完成（2026-11-27）
 
 上述「尚待合併／最終回歸」均為前一階段紀錄。現已固定合併後 main 完成全套檢查，無失敗、取消或略過；原始輸出、環境、效能數值、驗收範圍及 SHA 見 [最終回歸報告](final-regression-20261127/README.md)。只更新 tasks 9.2，未順帶勾選完整 Verify 或交付任務，也未使用新資料覆寫人工證據。
+
+## 2026-11-27 OpenSpec Verify追溯與主規格Sync
+
+基準main bd498d1（PR47已合併）；產品程式與7c3a9b9最終回歸版本一致。本次逐項列出10 FR、26 AC、6 DC的實作／測試／實際證據層級，見 [完整對照](openspec-verification-20261127/README.md)。五能力29需求／36情境同步到openspec/specs，保留原Purpose與本文；task1.2、9.3依真實來源補記完成。
+
+使用者確認Demo未完成，DC-06仍待影片，DC-03／05與task9.5未整體完成；未執行Archive、未關issue22。同步格式通過不代表整個專題或交付已完成，後續須依報告補齊影片／心得與完整DC驗證。

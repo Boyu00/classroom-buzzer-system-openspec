@@ -2,7 +2,7 @@
 
 以 Google Sheets Guided Notes 為題目來源的課堂搶答系統，支援老師、學生組別、單題／題組、速度／公平模式、線上原格寫回及 CSV。
 
-**目前狀態：** PR #43、#45、#46 已合併；v1.3 準備中退出及可讀 CSV unit_id 已實作並有人工紀錄。固定 main `7c3a9b9` 的 [最終回歸](docs/final-regression-20261127/README.md) 全部通過：222 項完整測試與 91 項瀏覽器檢查。tasks 9.2 已依既有人工／API／約定自動證據與最終回歸勾選，本次紀錄仍待 review／合併及 issue21 結案；完整 Verify／Sync／Archive、Demo 與交付仍待完成。
+**目前狀態：** PR #43、#45、#46、#47 已合併，issue21 已結案；v1.3 準備中退出及可讀 CSV unit_id 已實作並有人工紀錄。固定 main `7c3a9b9` 的 [最終回歸](docs/final-regression-20261127/README.md) 全部通過：222 項完整測試與 91 項瀏覽器檢查，tasks 9.2 已完成。本次新增 [FR／AC／DC追溯及主規格Sync](docs/openspec-verification-20261127/README.md) 供 review，完整交付Verify／Archive待Demo與交付補驗。
 
 - [完整產品規格](spec.md)：原第一版產品需求加上已確認的跨組對齊規則，現行 v1.3，開發方法採 OpenSpec。
 - [提案](openspec/changes/build-classroom-buzzer/proposal.md)：目的與能力範圍。
@@ -140,7 +140,7 @@ Migration 可重跑；已套用版本會核對 checksum，不可直接修改舊 
 
 ## OpenSpec 流程
 
-本組採一個完整 change `build-classroom-buzzer`：Explore → Propose → 分階段 Apply → Verify → Sync → Archive。提案與實作已分階段 review，最終版本回歸與完整 Verify 尚未完成。各能力 spec 位於 change 的 `specs/` 下，尚未同步至 `openspec/specs/` 主規格。
+本組採一個完整 change `build-classroom-buzzer`：Explore → Propose → 分階段 Apply → Verify → Sync → Archive。提案與實作已分階段 review，最終版本回歸與完整 Verify 尚未完成。五項能力已同步至 `openspec/specs/` 主規格，原change規劃仍保留供追溯；Demo與交付未完成，尚未Archive。主規格入口：[活動](openspec/specs/activity-sessions/spec.md)、[匯入](openspec/specs/sheets-import/spec.md)、[受理](openspec/specs/answer-submission/spec.md)、[排名](openspec/specs/result-ranking/spec.md)、[匯出](openspec/specs/result-export/spec.md)。
 
 已安裝 OpenSpec 的環境可檢查：
 
@@ -163,8 +163,8 @@ openspec validate build-classroom-buzzer --strict
 
 ## 下一步
 
-1. PR43／45／46 已合併，main 7c3a9b9 最終回歸通過；review 並合併 [最終紀錄](docs/final-regression-20261127/README.md)，完成 issue #21 結案。
+1. 最終回歸紀錄PR47已合併、issue21已結案；review本次 [Verify追溯與Sync](docs/openspec-verification-20261127/README.md)。
 2. 交付資料：AI 對話整理已入庫（[A](docs/ai-conversation-member-a.md)、[B](docs/ai-conversation-member-b.md)）；個人心得各自完成；Demo 影片由 A 拍攝（#24）。
-3. OpenSpec：上述完成後做完整 Verify、Sync、Archive（#22）；半成品不歸檔。
+3. OpenSpec：主規格Sync已執行；Demo／交付補齊後重驗DC與tasks，再完成Archive及issue22結案，半成品不歸檔。
 4. 最終確認交付資料後提交表單（#25，期限 2026-11-30 00:00）；不以表單已提交作為開始 Verify 的前提。
 5. 本機變更不會自動上傳 GitHub：需依序 commit、push 分支、建立 PR，再由另一人 review 後合併 main；其他人的變更也需 fetch／pull 才會出現在本機。

@@ -1,0 +1,58 @@
+{
+  "verifiedDate": "2026-11-27",
+  "prAuthorEvidence": [
+    {
+      "pr": 34,
+      "author": "a0972776282-tech",
+      "merged": true,
+      "url": "https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/34",
+      "review": {
+        "author": "Boyu00",
+        "state": "APPROVED",
+        "url": "https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/34#pullrequestreview-6011416078"
+      }
+    },
+    {
+      "pr": 30,
+      "author": "Boyu00",
+      "merged": true,
+      "url": "https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/30",
+      "review": {
+        "author": "a0972776282-tech",
+        "state": "CHANGES_REQUESTED",
+        "url": "https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/30#pullrequestreview-6005219096"
+      }
+    }
+  ],
+  "alignment": [
+    {
+      "author": "45678XYZ",
+      "createdAt": "2026-11-26T16:52:53Z",
+      "url": "https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/32#issuecomment-7198214097",
+      "body": "謝謝整理！SpecKit 組回覆如下：\n\n**1. 三條規則：同意採用**\n- 同一位老師最多一個非 `CLOSED` 活動，多個登入工作階段視為同一位老師\n- 加入碼六碼，字元集 `ABCDEFGHJKLMNPQRSTUVWXYZ23456789`\n- 組名去除前後空白後 1～30 個 Unicode 字元，同活動唯一\n\n我們會比照貴組文字，在 `spec.md` v1.1 補充 FR-01、新增 AC-24，修訂紀錄連結本 issue。規格變更與實作分開開 PR：#33（規格 v1.1）、#34（SF-01 實作）\n\n**2. 學生退出組別：建議兩邊都做**\n採用單一未結束活動後，主要用途是在準備中改正打錯的組名。行為：只有 `PREPARING` 可退出，同一交易移除本人組別與工作階段，之後可重新加入。貴組若不打算做，請回覆，我們再一起決定是否移除。\n\n**3. 次要差異**\n- CSV `unit_id`：建議統一為 `Q:題號`／`G:代號`，和答案格標記一致，老師看得懂。貴組方便調整嗎？\n- 教師密碼首次設定：不影響功能，建議各自維持。\n\n第 2、3 點確認後，請貴組的修訂紀錄也連結本 issue，作為 DC-04 的討論紀錄。\n"
+    },
+    {
+      "author": "a0972776282-tech",
+      "createdAt": "2026-11-27T01:10:25Z",
+      "url": "https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/32#issuecomment-7207072503",
+      "body": "OpenSpec 組確認本次對齊決定如下（依組員 2026-11-27 確認）：\n\n1. 三條規則維持雙方已同意的版本：同一老師最多一個非 CLOSED 活動（多登入工作階段合計）、六碼加入碼字元集 ABCDEFGHJKLMNPQRSTUVWXYZ23456789、組名 trim 後 1～30 個 Unicode 字元且同活動唯一。\n2. 同意兩組都提供「學生退出組別」。只有 PREPARING 可退出；伺服器依目前學生工作階段辨識本人，在同一交易移除本人組別並解除原學生工作階段綁定，使舊學生權限失效，之後可重新加入以修正組名。OPEN／CLOSED 拒絕退出，不藉此刪除已受理答案或結果；畫面停用不能代替後端階段與身分檢查。\n3. 同意 CSV 的 unit_id 統一輸出 Q:原題號／G:題組代號，例如 Q:3、G:A。相同題組各題共用 G:A；無人作答列亦使用相同規則。這只調整 CSV 對外識別值，內部資料庫／作答 API 可以各自保留既有 ID；欄位數、欄位順序與排序不變。\n4. 教師密碼首次設定方式維持各自做法，不影響產品功能。\n\n我們現在開始更新 OpenSpec 組的 spec.md 修訂紀錄、能力規格、design 與 tasks，並實作準備中退出及 CSV 識別值，補上階段限制、重新加入、身分撤銷、題組與無人作答 CSV 的回歸測試；修訂與跨組紀錄會連回本 issue。本留言是規格決定與實作承諾，不代表功能已完成或測試已通過。完成後再提供實作／驗證連結供核對。\n\n<!-- openspec-cross-group-32-decision-20261127 -->\n\n實作進度更新（2026-11-27）：OpenSpec 組已完成兩項變更並開 https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/46（commit 443a7af，尚待 review／合併）。spec 已更新 v1.3 並連回本 issue。完整回歸 222／222；新增真實無頭瀏覽器退出流程 13／13、教師頁 58／58、結果頁 20／20，OpenSpec strict 通過。上述為自動驗證，新增 AC-25／AC-26 的使用者人工操作仍另留紀錄，不宣稱已完成跨組整體驗收。退出限 PREPARING，CSV 對外 ID 改成 Q:題號／G:代號，內部作答 ID 保留。\n\n<!-- openspec-cross-group-32-implementation-443a7af -->"
+    }
+  ],
+  "completion": [
+    {
+      "pr": 43,
+      "merged": true,
+      "url": "https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/43"
+    },
+    {
+      "pr": 46,
+      "merged": true,
+      "url": "https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/46"
+    },
+    {
+      "pr": 47,
+      "merged": true,
+      "url": "https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/47"
+    }
+  ]
+}
