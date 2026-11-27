@@ -70,6 +70,24 @@ export function createActivityService(store, auth) {
         return { cookie, data: { ...view(activity), groupId, groupName: name } };
       });
     },
+    async leave(token) {
+      const selected = auth.requireSession(token);
+      if (selected.role !== 'STUDENT') throw new HttpError(403, 'STUDENT_REQUIRED', '此操作僅限已加入組別的學生。');
+      return store.write(selected.activity_id, (db) => {
+        const session = auth.requireSession(token, db);
+        if (session.role !== 'STUDENT' || session.activity_id !== selected.activity_id) {
+          throw new HttpError(403, 'STUDENT_REQUIRED', '此操作僅限已加入組別的學生。');
+        }
+        requirePreparing(getActivity(db, session.activity_id));
+        if (db.prepare('SELECT 1 FROM submissions WHERE group_id = ?').get(session.group_id)) {
+          throw new HttpError(409, 'GROUP_HAS_SUBMISSIONS', '已有受理紀錄的組別不能退出。');
+        }
+        // 先解除 session 外鍵；兩項變更在同一交易，刪除失敗時連同 token 旋轉一起回滾。
+        const cookie = auth.unbindStudent(token, db);
+        db.prepare('DELETE FROM groups WHERE activity_id = ? AND group_id = ?').run(session.activity_id, session.group_id);
+        return { cookie, data: { role: 'ANONYMOUS' } };
+      });
+    },
     snapshot(token, id) {
       return store.read((db) => {
         const session = auth.requireSession(token, db);

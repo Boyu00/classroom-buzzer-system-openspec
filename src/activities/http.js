@@ -10,6 +10,7 @@ export function createActivityHttp(store, access) {
   const router = Router();
   router.post('/activities', async (req, res) => access.send(res, await service.create(req.sessionToken, req.body?.mode)));
   router.post('/join', async (req, res) => access.send(res, await service.join(req.sessionToken, req.body?.joinCode, req.body?.groupName)));
+  router.post('/student/leave', async (req, res) => access.send(res, await service.leave(req.sessionToken)));
   router.get('/activities/:id/snapshot', (req, res) => access.send(res, service.snapshot(req.sessionToken, req.params.id)));
   router.post('/activities/:id/submissions', async (req, res) => access.send(res, await submissions.submit(req.sessionToken, req.params.id, req.body)));
   router.get('/activities/:id/results', (req, res) => access.send(res, results.results(req.sessionToken, req.params.id)));

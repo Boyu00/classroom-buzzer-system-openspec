@@ -100,6 +100,20 @@ async function stream(t, url, cookie, headers = {}) {
 const openStream = (t, f, client, headers) => stream(t, f.url + f.base + '/events', client.cookie, headers);
 const phase = (state) => (frame) => frame.event === 'snapshot' && frame.data.state === state;
 
+test('準備中退出即時撤銷舊學生 SSE，教師更新名單，其他學生不收到他組資訊', async (t) => {
+  const f = await fixture(t);
+  const own = await openStream(t, f, f.students[0]);
+  const other = await openStream(t, f, f.students[1]);
+  const teacher = await openStream(t, f, f.teacher);
+  await Promise.all([own.next(), other.next(), teacher.next()]);
+  assert.equal((await f.students[0].post('/api/student/leave', {})).status, 200);
+  await own.next(frame => frame.event === 'session-ended');
+  const updated = await teacher.next(frame => frame.data?.groups?.length === 1);
+  assert.equal(updated.data.groups[0].groupName, '測試組-1');
+  assert.equal((await f.students[1].request(`${f.base}/snapshot`)).status, 200);
+  assert.equal(other.history.filter(frame => frame.event === 'snapshot').length, 1);
+});
+
 test('SSE 先驗證身分與活動，拒絕跨活動、URL token、跨來源及 HEAD', async (t) => {
   const f = await fixture(t);
   const anon = await httpClient(f.url);

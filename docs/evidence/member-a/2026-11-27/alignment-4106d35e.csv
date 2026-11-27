@@ -1,0 +1,6 @@
+﻿activity_id,mode,unit_id,question_id,group_name,answer,accepted_at,accepted_order,rank,is_winner
+4106d35e-0737-467b-9d18-36b33a246529,SPEED,Q:3,3,更正後甲組,甲答3,2026-11-27T01:42:40.439Z,2,1,true
+4106d35e-0737-467b-9d18-36b33a246529,SPEED,G:A,7a,更正後甲組,甲答7a,2026-11-27T01:41:45.492Z,1,1,true
+4106d35e-0737-467b-9d18-36b33a246529,SPEED,G:A,7b,更正後甲組,甲答7b,2026-11-27T01:41:45.492Z,1,1,true
+4106d35e-0737-467b-9d18-36b33a246529,SPEED,G:A,7c,更正後甲組,甲答7c,2026-11-27T01:41:45.492Z,1,1,true
+4106d35e-0737-467b-9d18-36b33a246529,SPEED,Q:12,12,,,,,,false

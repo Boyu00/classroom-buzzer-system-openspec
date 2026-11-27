@@ -22,6 +22,12 @@
 
 tasks 3.4 的狀態控制已接入 tasks 5.3：有答案時可結束，完整排名與 CLOSED 同交易保存，失敗回滾並維持 OPEN。#8／#9 已有授權 SSE、共用連線模組及各通道隱私自動測試；完整頁面與 #6 人工整合仍待驗收。介面見 docs/live-sync-api.md。
 
+### 2026-11-27 跨組對齊補充
+
+依 SpecKit issue32 與使用者明確指示實作兩項：`POST /api/student/leave` 依目前 session 的 activity_id 進入 store.write，在同交易重查 STUDENT、PREPARING，先旋轉為匿名並解除外鍵綁定，再刪除本人組別；失敗整筆回滾。提交通知同活動 SSE，使舊 token 立即失效、老師名單更新。學生頁只有準備中提供退出按鈕；退出前停止舊串流並增加頁面 epoch，舊快照不得重新套用。網路回覆不確定時重新取得 session，不先宣稱已退出。
+
+CSV HTTP 層從已保存的 original_marker 取得 groupCode，提供給 CSV 純函式組成 `Q:題號`／`G:代號`；不把來源映射加入學生快照或更改結果 API 的 unitId。不需修改舊 migration，也不依賴目前線上 Sheets 值，因此寫回後、舊活動與重啟仍可下載一致的 CSV。缺少合法映射時明確失敗，不退回內部 ID 或輸出 G:undefined。
+
 ### 1. 模組與責任
 
 規劃使用 `src/`（後端）、`public/`（頁面）、`tests/`（測試）。A 建立共用設定、資料庫 migration、session／CSRF、活動、受理、排名與 SSE 模組；B 擴充 Sheets gateway、解析、匯出及教師／結果頁。兩人各自測試所負責功能，共同進行回歸與人工驗收。

@@ -6,6 +6,8 @@
 
 ## 格式（FR-09、AC-19）
 
+自 spec v1.3 起，CSV `unit_id` 為 `Q:原題號`／`G:題組代號`，例如 `Q:3`、`G:A`；同題組各列及無人作答列相同。內部 SQLite／JSON API 的 unitId 不變，不能拿 CSV 值直接提交答案。舊活動也從保存的 original_marker 取得代號，不依賴目前線上格值；映射無效回 409 EXPORT_MAPPING_INVALID，不輸出內部 ID 或 G:undefined。
+
 - 編碼 UTF-8 並以 BOM 開頭（讓 Excel 正確辨識中文），列與列之間、檔尾皆為 CRLF。`Content-Type: text/csv; charset=utf-8`，`Content-Disposition: attachment; filename="classroom-results-<活動 ID 前 8 碼>.csv"`，`Cache-Control: no-store`。
 - 欄位固定為：`activity_id, mode, unit_id, question_id, group_name, answer, accepted_at, accepted_order, rank, is_winner`。
 - 每筆受理依題展開成多列；題組各題共用同一組別、時間、受理序號、順位與 `is_winner`。
@@ -18,7 +20,7 @@
 
 使用者輸入欄位去除前導空白後若以 `=`、`+`、`-`、`@` 開頭，或**前導空白中**含 tab／CR／LF（檢查整段前導空白，不只第一個字元，例如「空白＋tab＋文字」也算），會在內容前加單引號（例如 `=1+1` → `'=1+1`、`  =1` → `'  =1`、`\t+cmd` → `'\t+cmd`）。只改輸出，資料庫與 results API 仍是原文。
 
-防護欄位是 `group_name`、`answer`，以及 `question_id`：題號是老師在試算表裡輸入的標記，規格允許以 `-` 開頭（例如 `{{Q:-5}}`），所以一併處理。`activity_id`、`mode`、`unit_id`、時間與數字欄位為系統產生，不加前綴。
+防護欄位是 `group_name`、`answer`，以及 `question_id`：題號是老師在試算表裡輸入的標記，規格允許以 `-` 開頭（例如 `{{Q:-5}}`），所以一併處理。`unit_id` 雖含題號或代號，但固定以 Q: 或 G: 起頭且識別字符合標記規則，不需公式前綴；`activity_id`、`mode`、時間與數字欄位為系統產生。
 
 注意：單引號是「降低風險」的措施，在 Excel 開啟 CSV 時前綴會顯示成內容的一部分。這是規格選擇的取捨。
 

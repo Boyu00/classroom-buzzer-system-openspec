@@ -65,11 +65,11 @@ const results = () => ({
   // 刻意讓陣列順序與 order／rank 不同，驗證排序。
   units: [
     { unitId: 'u2', type: 'SINGLE', order: 1, questions: [{ questionId: '9', order: 0 }], winnerSubmissionId: null, submissions: [] },
-    { unitId: 'u1', type: 'GROUP', order: 0, questions: [{ questionId: '3', order: 0 }, { questionId: '2', order: 1 }], winnerSubmissionId: 's1', submissions: [
+    { unitId: 'u1', type: 'GROUP', groupCode: 'A', order: 0, questions: [{ questionId: '3', order: 0 }, { questionId: '2', order: 1 }], winnerSubmissionId: 's1', submissions: [
       sub('s2', '乙組', 1, 2, false, [{ questionId: '2', text: '乙-2' }, { questionId: '3', text: '乙-3' }]),
       sub('s1', '甲,組 "A"', 2, 1, true, [{ questionId: '2', text: '多行\n答案, 含 "引號"' }, { questionId: '3', text: '甲-3' }]),
     ] },
-    { unitId: 'u4', type: 'GROUP', order: 3, questions: [{ questionId: '8', order: 1 }, { questionId: '7', order: 0 }], winnerSubmissionId: null, submissions: [] },
+    { unitId: 'u4', type: 'GROUP', groupCode: 'B-2.1', order: 3, questions: [{ questionId: '8', order: 1 }, { questionId: '7', order: 0 }], winnerSubmissionId: null, submissions: [] },
     { unitId: 'u3', type: 'SINGLE', order: 2, questions: [{ questionId: '-5', order: 0 }], winnerSubmissionId: 's3', submissions: [
       sub('s3', '=cmd|calc', 3, 1, true, [{ questionId: '-5', text: ' =1+1' }]),
     ] },
@@ -91,11 +91,11 @@ test('AC-19：排序與展開的完整預期（逐列比對）', () => {
   // 單位 u1（order 0）：順位 1 的甲組先，再乙組；組內依題序（題 3 的 order 0 在題 2 之前）。
   // 單位 u2（order 1）：無人作答。單位 u3（order 2）：單題。單位 u4（order 3）：無人作答，依題序 7 再 8。
   assert.deepEqual(rows.map((r) => [r[2], r[3], r[4], r[7], r[8], r[9]]), [
-    ['u1', '3', '甲,組 "A"', '2', '1', 'true'], ['u1', '2', '甲,組 "A"', '2', '1', 'true'],
-    ['u1', '3', '乙組', '1', '2', 'false'], ['u1', '2', '乙組', '1', '2', 'false'],
-    ['u2', '9', '', '', '', 'false'],
-    ['u3', "'-5", "'=cmd|calc", '3', '1', 'true'],
-    ['u4', '7', '', '', '', 'false'], ['u4', '8', '', '', '', 'false'],
+    ['G:A', '3', '甲,組 "A"', '2', '1', 'true'], ['G:A', '2', '甲,組 "A"', '2', '1', 'true'],
+    ['G:A', '3', '乙組', '1', '2', 'false'], ['G:A', '2', '乙組', '1', '2', 'false'],
+    ['Q:9', '9', '', '', '', 'false'],
+    ['Q:-5', "'-5", "'=cmd|calc", '3', '1', 'true'],
+    ['G:B-2.1', '7', '', '', '', 'false'], ['G:B-2.1', '8', '', '', '', 'false'],
   ]);
   assert.deepEqual(rows[0].slice(0, 2), ['act-1', 'FAIR']);
 });
@@ -110,7 +110,7 @@ test('AC-19：中文、引號、逗號、換行逐字還原；時間為 UTC ISO 
 
 test('AC-19：無人作答題每題仍一列，組別、答案、時間、序號、順位留空，is_winner 為 false', () => {
   const rows = parseCsv(buildResultsCsv(results()).slice(1)).slice(1);
-  const empty = rows.filter((r) => r[2] === 'u2' || r[2] === 'u4');
+  const empty = rows.filter((r) => r[2] === 'Q:9' || r[2] === 'G:B-2.1');
   assert.equal(empty.length, 3, '題組 u4 有 2 題，各一列；u2 一列');
   for (const r of empty) assert.deepEqual([r[4], r[5], r[6], r[7], r[8], r[9]], ['', '', '', '', '', 'false']);
 });
@@ -119,7 +119,7 @@ test('AC-20：組名、答案、題號含公式開頭或前導控制字元時加
   const input = deepFreeze(results());
   const before = JSON.stringify(input);
   const rows = parseCsv(buildResultsCsv(input).slice(1)).slice(1);
-  const risky = rows.find((r) => r[2] === 'u3');
+  const risky = rows.find((r) => r[2] === 'Q:-5');
   assert.equal(risky[3], "'-5", 'question_id');
   assert.equal(risky[4], "'=cmd|calc", 'group_name');
   assert.equal(risky[5], "' =1+1", 'answer（前導空白後為 =）');
@@ -131,6 +131,32 @@ test('AC-20：組名、答案、題號含公式開頭或前導控制字元時加
 test('沒有任何單位時仍輸出 BOM 與標題列', () => {
   const text = buildResultsCsv({ activityId: 'a', mode: 'SPEED', state: 'CLOSED', units: [] });
   assert.equal(text, `${BOM}${CSV_COLUMNS.join(',')}\r\n`);
+});
+
+test('AC-26：缺少或非法題組代號不可退回內部 ID／G:undefined', () => {
+  for (const groupCode of [undefined, '', 'A|B']) {
+    assert.throws(() => buildResultsCsv({ activityId: 'a', mode: 'SPEED', units: [
+      { unitId: 'private-uuid', type: 'GROUP', groupCode, order: 0, questions: [{ questionId: '7a', order: 0 }], submissions: [] },
+    ] }), /缺少合法/);
+  }
+});
+
+test('AC-26（HTTP）：既有活動從保存標記還原題組代號，不改 JSON ID；映射損壞明確拒絕', async (t) => {
+  const f = await closedActivity(t);
+  await f.teacher.post(`${f.base}/open`, {});
+  await f.teacher.post(`${f.base}/close`, { confirmed: true });
+  const original = (await f.teacher.request(`${f.base}/results`)).result.data;
+  const response = await fetch(f.url + f.base + '/results.csv', { headers: { Cookie: f.teacher.cookie } });
+  assert.equal(response.status, 200);
+  // fetch.text() 會去除 BOM；使用相同解析器驗證無人作答題組仍共用 G:X。
+  const rows = parseCsv((await response.text()).replace(/^\uFEFF/, '')).slice(1);
+  assert.deepEqual(rows.map(row => row[2]), ['Q:1', 'G:X', 'G:X', 'Q:4']);
+  assert.deepEqual((await f.teacher.request(`${f.base}/results`)).result.data, original);
+  assert.deepEqual(original.units.map(u => u.unitId), ['single', 'group', 'empty']);
+  await f.runtime.store.write(f.activity.activityId, db => db.prepare("UPDATE questions SET original_marker = '{{Q:3|G:OTHER}}' WHERE activity_id = ? AND question_id = '3'").run(f.activity.activityId));
+  const invalid = await f.teacher.request(`${f.base}/results.csv`);
+  assert.equal(invalid.status, 409);
+  assert.equal(invalid.result.error.code, 'EXPORT_MAPPING_INVALID');
 });
 
 /* ---------- HTTP：權限、狀態、標頭與位元組 ---------- */
@@ -185,7 +211,7 @@ test('AC-19／AC-20（HTTP）：教師結束後下載，標頭、BOM 位元組�
   assert.deepEqual(rows[0], CSV_COLUMNS);
   const data = rows.slice(1);
   // 單題一列、題組兩題兩列（依題序）、無人作答的單位仍一列。
-  assert.deepEqual(data.map((r) => [r[2], r[3]]), [['single', '1'], ['group', '2'], ['group', '3'], ['empty', '4']]);
+  assert.deepEqual(data.map((r) => [r[2], r[3]]), [['Q:1', '1'], ['G:X', '2'], ['G:X', '3'], ['Q:4', '4']]);
   const results = (await f.teacher.request(`${f.base}/results`)).result.data;
   assert.ok(data.every((r) => r[0] === f.activity.activityId && r[1] === 'SPEED'));
 
@@ -194,23 +220,23 @@ test('AC-19／AC-20（HTTP）：教師結束後下載，標頭、BOM 位元組�
   for (const unit of results.units) {
     for (const submission of unit.submissions) {
       for (const answer of submission.answers) {
-        const row = data.find((r) => r[2] === unit.unitId && r[3] === answer.questionId && unguard(r[4]) === submission.groupName);
+        const row = data.find((r) => r[3] === answer.questionId && unguard(r[4]) === submission.groupName);
         assert.ok(row, `${unit.unitId}/${answer.questionId}`);
         assert.equal(unguard(row[5]), answer.text);
         assert.deepEqual([row[6], Number(row[7]), Number(row[8]), row[9]], [submission.acceptedAt, submission.acceptedOrder, submission.rank, String(submission.isWinner)]);
       }
     }
   }
-  const empty = data.find((r) => r[2] === 'empty');
+  const empty = data.find((r) => r[2] === 'Q:4');
   assert.deepEqual([empty[4], empty[5], empty[6], empty[7], empty[8], empty[9]], ['', '', '', '', '', 'false']);
 
   // 防護只影響輸出：結果 API 與資料庫仍是原文。
   assert.equal(results.units.find((u) => u.unitId === 'single').submissions[0].answers[0].text, '=1+1');
-  const guarded = data.find((r) => r[2] === 'single');
+  const guarded = data.find((r) => r[2] === 'Q:1');
   assert.equal(guarded[5], "'=1+1");
-  const groupRow = data.find((r) => r[2] === 'group' && r[3] === '3');
+  const groupRow = data.find((r) => r[2] === 'G:X' && r[3] === '3');
   assert.deepEqual([groupRow[4], groupRow[5]], [`'=HYPERLINK("x")`, "'\t+cmd"], '組名與答案都有前導防護');
-  assert.equal(data.find((r) => r[2] === 'group' && r[3] === '2')[5], '第一行\n第二行, "引號"', '一般內容不加前綴，換行與引號還原');
+  assert.equal(data.find((r) => r[2] === 'G:X' && r[3] === '2')[5], '第一行\n第二行, "引號"', '一般內容不加前綴，換行與引號還原');
   const stored = f.runtime.store.read((db) => db.prepare('SELECT answer FROM submission_answers ORDER BY answer').all().map((x) => x.answer));
   assert.deepEqual(stored, ['\t+cmd', '=1+1', '第一行\n第二行, "引號"']);
   assert.equal(text.includes('\r\n'), true);

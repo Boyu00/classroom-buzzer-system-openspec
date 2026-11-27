@@ -7,7 +7,7 @@
 1. 使用同源 `GET /api/session` 取得自己的 role、csrfToken、teacherConfigured、expiresAt。尚無有效 Cookie 時建立匿名工作階段。
 2. teacherConfigured 為 false 時由老師呼叫 `POST /api/teacher/setup`，JSON 為 `{ "password": "實際設定的密碼" }`；已設定時改用 `/api/teacher/login`。這是本機單一教師設定，不是帳號註冊。
 3. 所有變更請求皆須帶相同工作階段 Cookie、精確同源 Origin、`X-CSRF-Token` 及 JSON 內容。正常同源瀏覽器 fetch 自動帶 Cookie 與 Origin，程式補上 CSRF header。
-4. setup、login、logout 及首次 join 都旋轉 Cookie，成功回應有新的 csrfToken，前端須立即替換舊 token。再次 GET session／刷新可恢復，不需重新登入或建立組別。
+4. setup、login、logout、首次 join 及準備中 student/leave 都旋轉 Cookie，成功回應有新的 csrfToken，前端須立即替換舊 token。再次 GET session／刷新可恢復，不需重新登入或建立組別。
 5. `POST /api/logout` 將該工作階段撤銷並換成新匿名身分。老師與不同學生組別使用獨立瀏覽器 profile／無痕工作階段，不能只開共用 Cookie 的多個分頁模擬不同組。
 
 Cookie 為 `classroom_session`，32 隨機 bytes 的 base64url 值，HttpOnly、SameSite=Strict、Path=/；本機 HTTP 不設 Secure。資料庫只存 token／CSRF 的 SHA-256 hash；CSRF 原值由 Cookie 秘密衍生，只有同源 session 回應可讀。教師密碼保留原輸入（不 trim），限 8～128 Unicode 字元、不能全空白，採隨機 salt 與 scrypt（N=32768、r=8、p=3、64-byte key）。設定後不能經 setup 覆寫。
@@ -15,6 +15,8 @@ Cookie 為 `classroom_session`，32 隨機 bytes 的 base64url 值，HttpOnly、
 工作階段固定期限：匿名 1 小時、教師 8 小時、學生 24 小時；刷新不延長期限。到期後需重新取得 session；教師可再登入。遺失或到期的學生 Cookie 不能只靠組名接管舊組，符合一組一有效工作階段規則，不提供跨裝置接管。過期且無活動／預覽引用的 session 在 GET session 時清理；被引用的歷史教師 row 保留以維持外鍵，但已無驗證權限。
 
 ## 活動與組別
+
+2026-11-27 跨組對齊新增 `POST /api/student/leave`，JSON `{}`。只接受目前學生 session、有效 Origin／CSRF 與 PREPARING；不使用 body 的 groupId／activityId 選擇退出對象。與開啟共用活動佇列，同交易將本人 session 旋轉為匿名、解除綁定並刪除組別；成功 `{ data: { role: "ANONYMOUS", csrfToken: "新的值" } }` 並設定新 Cookie。舊 Cookie／舊 SSE 立即失效，教師名單同步移除，其他組別不變。可重新以更正組名加入，原組名亦釋放。OPEN／CLOSED 回 409 INVALID_PHASE；匿名／教師回 403 STUDENT_REQUIRED，無效 session 回 401。刪除失敗會連同 session 旋轉回滾。
 
 | 方法與路徑 | JSON／用途 | 可用身分 |
 | --- | --- | --- |

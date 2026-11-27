@@ -4,7 +4,7 @@
 
 ## 1. 共同規劃與對齊
 
-- [ ] 1.1 [共同 #1] 兩人檢閱 proposal、五份能力 spec、design 與本 tasks；驗證：執行 `openspec validate build-classroom-buzzer --strict` 通過，PR 留下實質 review 並確認 API／資料模型。
+- [x] 1.1 [共同 #1] 兩人檢閱 proposal、五份能力 spec、design 與本 tasks；驗證：執行 `openspec validate build-classroom-buzzer --strict` 通過，PR 留下實質 review 並確認 API／資料模型。（2026-11-26 核對：B 在 [PR #26](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/26#issuecomment-7014541335) 以留言提出 5 項模型預設值，design.md 已註明採用；API／資料模型的確認是透過 B 對 A 實作 PR #27～#29、#31、#34 的 Approve，並非 #26 上的正式 review；strict validate 通過。）
 - [ ] 1.2 [共同 #2] 與 SpecKit 小組確認產品功能一致；驗證：docs/collaboration.md 留真實討論日期、參與者、結論與規格版本，不以 AI 推測代替。
 
 ## 2. 專案骨架與資料層（member A）
@@ -41,7 +41,7 @@
 - [x] 5.4 [A #12] 實作加入、等待、依題號作答、題組送出、自己受理紀錄與結束後結果頁連結；驗證：兩個瀏覽器工作階段可分別操作，無成功回覆不顯示成功，未整合 B 結果頁時明示待整合。
 - [x] 5.5 [A #12] 加入文字安全、鍵盤、欄位標籤及連線／錯誤提示；驗證：AC-16 腳本不執行，鍵盤可完整填答。
 - [x] 5.6 [A #11～#12] 補排名與學生頁測試、更新操作文件；驗證：公平範例、重啟與刷新測試通過，文件描述與實際行為一致。
-- [ ] 5.7 [A→B #3～#12] 更新 docs/collaboration.md 的交接欄並開 PR；驗證：B 可按 README 啟動、跑 A 測試、讀取模型及 API，完成 review，清楚列出尚待真實 Sheets／教師頁的項目。
+- [x] 5.7 [A→B #3～#12] 更新 docs/collaboration.md 的交接欄並開 PR；驗證：B 可按 README 啟動、跑 A 測試、讀取模型及 API，完成 review，清楚列出尚待真實 Sheets／教師頁的項目。（2026-11-26 核對：A 在 PR #34 更新交接欄；B 的確認見 docs/collaboration.md「A → B 交接紀錄」的「B 確認」列。）
 
 ## 6. Sheets 匯入與教師頁（member B；依賴 A 共用資料層與身分）
 
@@ -73,6 +73,14 @@
 - [ ] 9.3 [共同 #23] 更新 README、分工表、PR／review 連結與 AI 對話整理；驗證：每人至少一筆實際合併 PR 與實質 review，可由連結核對，對話先移除機密。
 - [ ] 9.4 [共同 #24] 錄製不超過五分鐘的 YouTube Demo；驗證：完整展示教師及至少兩組學生、真實 Sheets 匯入與原格寫回，留影片連結與長度。
 - [ ] 9.5 [共同 #22] 對照全部 FR／AC／DC 執行 OpenSpec Verify，修正後重驗；驗證：docs/verification.md 記錄實際結果且無未處理缺口，全部前置實作與驗收任務完成。
+
+## 10. 2026-11-27 跨組對齊追加
+
+- [x] 10.1 [A 追加] 更新 spec v1.3、能力規格、設計與真實跨組討論來源，明確定義準備中退出及 CSV 可讀識別值；驗證：OpenSpec strict 通過。
+- [x] 10.2 [A 追加] 實作準備中本人退出的交易、Cookie／CSRF 旋轉、舊權限撤銷及教師同步；驗證：AC-25，含非法階段、身分、回滾、開啟競態及 SSE。
+- [x] 10.3 [A 追加] 學生頁新增準備中退出與返回加入頁，失敗不假成功、舊快照不恢復；驗證：DOM 與真實瀏覽器流程。
+- [x] 10.4 [A 追加] CSV unit_id 改用 Q:題號／G:代號，保留內部 ID、十欄、順位及無人作答列；驗證：AC-26，純函式及 HTTP 含舊活動映射與缺失映射。
+- [x] 10.5 [A 追加] 更新 API、CSV、學生頁及操作驗收文件，執行完整回歸與瀏覽器測試並記錄實際結果。
 
 ## Workflow follow-up
 
