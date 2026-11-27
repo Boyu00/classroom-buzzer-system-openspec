@@ -2,7 +2,7 @@
 
 以 Google Sheets Guided Notes 為題目來源的課堂搶答系統，支援老師、學生組別、單題／題組、速度／公平模式、線上原格寫回及 CSV。
 
-**目前狀態：** 既有功能與 v1.3 新增的準備中退出、可讀 CSV unit_id 已實作。真實 Sheets／獨立瀏覽器的預定人工操作已完成；AC-06／AC-10 由兩人確認採自動證據，其他 API／故障情境的範圍見 [驗收紀錄](docs/acceptance-checklist.md)。PR #43、#45、#46 的整合文件仍待 review／合併，合併後最終回歸與 tasks 9.2 收尾尚未完成。
+**目前狀態：** PR #43、#45、#46 已合併；v1.3 準備中退出及可讀 CSV unit_id 已實作並有人工紀錄。固定 main `7c3a9b9` 的 [最終回歸](docs/final-regression-20261127/README.md) 全部通過：222 項完整測試與 91 項瀏覽器檢查。tasks 9.2 已依既有人工／API／約定自動證據與最終回歸勾選，本次紀錄仍待 review／合併及 issue21 結案；完整 Verify／Sync／Archive、Demo 與交付仍待完成。
 
 - [完整產品規格](spec.md)：原第一版產品需求加上已確認的跨組對齊規則，現行 v1.3，開發方法採 OpenSpec。
 - [提案](openspec/changes/build-classroom-buzzer/proposal.md)：目的與能力範圍。
@@ -163,7 +163,7 @@ openspec validate build-classroom-buzzer --strict
 
 ## 下一步
 
-1. Review 後依 #43 → #45 → #46 合併，保留歷史與新規格；固定最新 main SHA 執行完整回歸，再更新驗收結論、tasks 9.2／issue #21。
+1. PR43／45／46 已合併，main 7c3a9b9 最終回歸通過；review 並合併 [最終紀錄](docs/final-regression-20261127/README.md)，完成 issue #21 結案。
 2. 交付資料：AI 對話整理已入庫（[A](docs/ai-conversation-member-a.md)、[B](docs/ai-conversation-member-b.md)）；個人心得各自完成；Demo 影片由 A 拍攝（#24）。
 3. OpenSpec：上述完成後做完整 Verify、Sync、Archive（#22）；半成品不歸檔。
 4. 最終確認交付資料後提交表單（#25，期限 2026-11-30 00:00）；不以表單已提交作為開始 Verify 的前提。

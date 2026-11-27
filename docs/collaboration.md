@@ -111,3 +111,7 @@ PR43（B）保留 README、分工、B AI 摘要及 tasks 1.1／5.7 的 review �
 建議由 B 確認證據與 #46 最新差異後，依 #43 → #45 → #46 合併。#45 的當時未定案描述由 #46 改成歷史，最後保留 v1.3 定案；#46 已包含兩分支，優先採保留 merge ancestry 的方式，若採 squash 仍須確認內容與衝突解法完整。最終 main 再由 A 固定 SHA 跑 npm test、teacher／results／student-leave 瀏覽器回歸及 OpenSpec strict；通過才更新 9.2／#21 和完整 Verify 紀錄。未合併前的既有通過數不冒充最終版本結果。
 
 A／B AI 摘要均已提供於分支或 main；每人心得仍各自完成並上傳，Demo 由 A 拍攝，不能以本次證據補交代替影片、心得或表單繳交。
+
+## 2026-11-27 合併後最終回歸
+
+PR43／45／46 已透過 PR46 merge commit 合併到 main 7c3a9b9。A 依使用者要求，以獨立 worktree 全新安裝並執行 npm test 222／222、教師 58／58、結果 20／20、退出 13／13；OpenSpec strict、文件連結與23份證據雜湊通過，見 [最終回歸報告](final-regression-20261127/README.md)。tasks 9.2 在本次文件分支收尾，仍由 B review 後合併紀錄及結案issue21；未把本次輸出當成新的真實 Sheets 人工證據。Demo、各人心得、完整 Verify／Sync／Archive 與繳交仍按既有分工處理。
