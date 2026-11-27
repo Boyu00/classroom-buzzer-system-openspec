@@ -241,5 +241,6 @@ v1.1（2026-11-19）：依本組選擇改用 OpenSpec，調整流程產物、能
 
 v1.2（2026-11-20）：依使用者明確確認採用 PR #26 的活動上限、六碼加入碼及組名長度建議，新增 FR-01 補充與 AC-24，並同步本組能力規格、design、tasks 及 API 文件；未宣稱已取得另一 SpecKit 小組同意。其餘產品範圍保留。
 
-v1.3（2026-11-27）：依 [跨組 issue32](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/32) 的實際討論，SpecKit 組已同意三條 v1.2 規則；OpenSpec 組確認新增準備中學生退出與 CSV unit_id 統一為 Q:題號／G:代號（[本組決議](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/32#issuecomment-7207072503)），增加 AC-25／AC-26，教師密碼首次設定方式各自維持。此為已確認規格，實作與驗收另留證據。
+跨組對齊（2026-11-26）：比對 SpecKit 小組 `main`（commit `0ad5278`）後，在其 repo 開立 [issue #32](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/32)，提出 v1.2 的加入碼、組名長度、未結束活動上限三項規則，以及對方新增的學生退出組別功能。此為發起討論的歷史紀錄；後續已於 2026-11-27 定案，規格與實作見下列 v1.3 及 [PR #46](https://github.com/Boyu00/classroom-buzzer-system-openspec/pull/46)。
 
+v1.3（2026-11-27）：依 [跨組 issue32](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/32) 的實際討論，SpecKit 組已同意三條 v1.2 規則；OpenSpec 組確認新增準備中學生退出與 CSV unit_id 統一為 Q:題號／G:代號（[本組決議](https://github.com/tom1030507/classroom-buzzer-system-speckit/issues/32#issuecomment-7207072503)），增加 AC-25／AC-26，教師密碼首次設定方式各自維持。此為已確認規格，實作與驗收另留證據。
