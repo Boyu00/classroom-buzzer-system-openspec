@@ -4,9 +4,9 @@
 
 | 角色 | GitHub 帳號 | Issues | 現況 |
 | --- | --- | --- | --- |
-| member A | a0972776282-tech | #3～#12；追加 #46 | 原任務全部已合併（PR #27、#28、#29、#31、#34，各經 Boyu00 正式 Approve）；#46 準備中退出／CSV 對齊已實作與人工補測，待 review／合併 |
+| member A | a0972776282-tech | #3～#12；追加 #46 | 原任務全部已合併（PR #27、#28、#29、#31、#34，各經 Boyu00 正式 Approve）；#46 準備中退出／CSV 對齊、#47 最終回歸皆經 B 正式核准並合併；Demo 待 A 拍攝 |
 | member B | Boyu00 | #13～#19 | #13～#17、#19 已合併（PR #30、#32、#33、#35、#36、#37、#38，各經 A review）；#18 教師頁寫回面板（PR #40）已合併；寫回已在真實 Sheets 驗證；AC-01～AC-24 人工驗收已執行（見驗收清單），Demo 未完成 |
-| 共同 | 兩人 | #1～#2、#20～#25 | #20 整合驗證（PR #39）已合併；#21 已有 #41／44 人工紀錄及 #46 新證據，待最終 main 回歸結案；#2 討論已定案並留來源；#23 README／分工在 #43／46，最終 review 待完成；#22、#24、#25（verify／sync／archive、Demo、繳交）未完成 |
+| 共同 | 兩人 | #1～#2、#20～#25 | #20 整合驗證（PR #39）已合併；#21 隨 #47 紀錄合併已結案；#2 討論、#23 README／分工與 AI 摘要已有已合併來源，本次補記 tasks 1.2／9.3；#22 追溯／Sync 在本次分支供 review，Archive、#24 Demo、#25 繳交仍未完成 |
 
 ## 既有 issues 與責任
 
@@ -115,3 +115,9 @@ A／B AI 摘要均已提供於分支或 main；每人心得仍各自完成並上
 ## 2026-11-27 合併後最終回歸
 
 PR43／45／46 已透過 PR46 merge commit 合併到 main 7c3a9b9。A 依使用者要求，以獨立 worktree 全新安裝並執行 npm test 222／222、教師 58／58、結果 20／20、退出 13／13；OpenSpec strict、文件連結與23份證據雜湊通過，見 [最終回歸報告](final-regression-20261127/README.md)。tasks 9.2 在本次文件分支收尾，仍由 B review 後合併紀錄及結案issue21；未把本次輸出當成新的真實 Sheets 人工證據。Demo、各人心得、完整 Verify／Sync／Archive 與繳交仍按既有分工處理。
+
+## 2026-11-27 issue22前段驗證與Sync
+
+PR47已合併main bd498d1、issue21已結案。A依使用者要求整理 [FR／AC／DC追溯與主規格同步](openspec-verification-20261127/README.md)，task1.2與9.3依已合併文件及實際GitHub來源補記完成。DC-01以A的PR34／B的PR30及另一人的review核對；PR35為留言型review，不誤標正式核准。
+
+使用者明確回覆Demo尚未完成，所以本輪只完成產品證據核對與五能力Sync，change維持active、task9.4／9.5未勾，issue22保持開啟。A仍負責Demo，每位各自補方法心得；B可先review主規格與追溯矩陣，影片及DC完整後再接Archive。

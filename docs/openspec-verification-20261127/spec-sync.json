@@ -1,0 +1,58 @@
+{
+  "date": "2026-11-27",
+  "change": "build-classroom-buzzer",
+  "baseline": "bd498d1540aec6014d691f3f02f8afe940f05d4e",
+  "synced": [
+    {
+      "capability": "activity-sessions",
+      "delta": "openspec/changes/build-classroom-buzzer/specs/activity-sessions/spec.md",
+      "main": "openspec/specs/activity-sessions/spec.md",
+      "requirements": 7,
+      "scenarios": 10,
+      "purposePreserved": true,
+      "requirementsPreserved": true,
+      "sha256": "ad84c068add63fc1760f79306c808ae6e05f81436f1c6e21a259757059f62e22"
+    },
+    {
+      "capability": "answer-submission",
+      "delta": "openspec/changes/build-classroom-buzzer/specs/answer-submission/spec.md",
+      "main": "openspec/specs/answer-submission/spec.md",
+      "requirements": 7,
+      "scenarios": 8,
+      "purposePreserved": true,
+      "requirementsPreserved": true,
+      "sha256": "eae8a20c75e2eedb081b74e971616bfc6d07b4459fc825bbc85bc082347a69a7"
+    },
+    {
+      "capability": "result-export",
+      "delta": "openspec/changes/build-classroom-buzzer/specs/result-export/spec.md",
+      "main": "openspec/specs/result-export/spec.md",
+      "requirements": 7,
+      "scenarios": 7,
+      "purposePreserved": true,
+      "requirementsPreserved": true,
+      "sha256": "69abf18635fcb85d1797a2b5d0e63b9d7795f2a314b9251215e892fc77631f67"
+    },
+    {
+      "capability": "result-ranking",
+      "delta": "openspec/changes/build-classroom-buzzer/specs/result-ranking/spec.md",
+      "main": "openspec/specs/result-ranking/spec.md",
+      "requirements": 4,
+      "scenarios": 5,
+      "purposePreserved": true,
+      "requirementsPreserved": true,
+      "sha256": "f0cd38f35c7930e21137c94eb68bb64f4645538f22d9b35bd0615a528afb5c8a"
+    },
+    {
+      "capability": "sheets-import",
+      "delta": "openspec/changes/build-classroom-buzzer/specs/sheets-import/spec.md",
+      "main": "openspec/specs/sheets-import/spec.md",
+      "requirements": 4,
+      "scenarios": 6,
+      "purposePreserved": true,
+      "requirementsPreserved": true,
+      "sha256": "1c16b1ab6e44bced745a4a2eb0af4e4c762a757dcca72fed42741a3359beb579"
+    }
+  ],
+  "archivePerformed": false
+}
